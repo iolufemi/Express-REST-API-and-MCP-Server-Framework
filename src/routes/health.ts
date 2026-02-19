@@ -34,7 +34,7 @@ router.get('/health', async (_req: ExpressRequest, res: ExpressResponse) => {
         // Check if queue is accessible (Bull queues are always "connected" once created)
         getQueue(queueName);
         queueHealth[queueName] = true;
-      } catch (err) {
+      } catch {
         queueHealth[queueName] = false;
       }
     }
@@ -81,7 +81,7 @@ router.get('/health', async (_req: ExpressRequest, res: ExpressResponse) => {
     // Return appropriate HTTP status code
     const httpStatus = status === 'healthy' ? 200 : status === 'degraded' ? 200 : 503;
     res.status(httpStatus).json(healthResponse);
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Health check error:', err);
     res.status(503).json({
       status: 'unhealthy',
@@ -121,7 +121,7 @@ router.get('/health/ready', async (_req: ExpressRequest, res: ExpressResponse) =
         timestamp: new Date().toISOString()
       });
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Readiness check error:', err);
     res.status(503).json({
       ready: false,

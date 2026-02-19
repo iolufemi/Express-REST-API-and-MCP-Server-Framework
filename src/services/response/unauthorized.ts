@@ -4,7 +4,7 @@ import { ExpressRequest, ExpressResponse } from '../../types/express.js';
 export default function unauthorized(this: ExpressResponse, data?: any, message?: string): void {
   log.warn('sending unauthorized response: ', data, message || 'unauthorized');
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = { response: { status: 'error', data: data, message: message ? message : 'unauthorized' } };

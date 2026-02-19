@@ -12,7 +12,7 @@ import { MCPServerConfig } from '../../../types/mcp.js';
 /**
  * Create and configure the Models MCP server
  */
-export function createModelsMCPServer(config: MCPServerConfig): McpServer {
+export async function createModelsMCPServer(config: MCPServerConfig): Promise<McpServer> {
   const mcpServer = new McpServer(
     {
       name: config.name || 'models-mcp-server',
@@ -26,9 +26,8 @@ export function createModelsMCPServer(config: MCPServerConfig): McpServer {
     }
   );
 
-  // Register resources and tools (low-level API uses underlying server)
-  registerModelResources(mcpServer.server);
-  registerModelTools(mcpServer.server);
+  await registerModelResources(mcpServer.server);
+  await registerModelTools(mcpServer.server);
 
   return mcpServer;
 }

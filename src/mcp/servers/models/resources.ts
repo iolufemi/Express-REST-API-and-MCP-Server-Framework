@@ -6,15 +6,15 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { Resource } from '@modelcontextprotocol/sdk/types.js';
-import models from '../../../models/index.js';
+import modelsPromise from '../../../models/index.js';
 import { getAllModelMetadata } from '../../utils/model-metadata.js';
 import type { ModelMetadata } from '../../../types/models.js';
 
 /**
  * Register model resources with MCP server
  */
-export function registerModelResources(_server: Server): void {
-  const modelMetadata = getAllModelMetadata();
+export async function registerModelResources(_server: Server): Promise<void> {
+  const modelMetadata = await getAllModelMetadata();
 
   // Register list resource for each model
   modelMetadata.forEach((meta: ModelMetadata) => {
@@ -60,18 +60,20 @@ export function registerModelResources(_server: Server): void {
  */
 export async function getModelListResource(
   modelName: string,
-  query?: any
-): Promise<any> {
+  query?: Record<string, unknown>
+): Promise<unknown> {
+  const models = await modelsPromise;
   const Model = models[modelName];
   if (!Model) {
     throw new Error(`Model ${modelName} not found`);
   }
 
-  const metadata = getAllModelMetadata().find(m => m.name === modelName);
-  const limit = query?.limit || 50;
-  const skip = query?.skip || 0;
+  const allMetadata = await getAllModelMetadata();
+  const metadata = allMetadata.find(m => m.name === modelName);
+  const limit = (query?.limit as number) || 50;
+  const skip = (query?.skip as number) || 0;
 
-  const results = await (Model as any).find(query || {})
+  const results = await (Model as { find: (q: object) => { limit: (n: number) => { skip: (n: number) => { lean: () => Promise<unknown[]> } } } }).find(query || {})
     .limit(limit)
     .skip(skip)
     .lean();
@@ -81,7 +83,7 @@ export async function getModelListResource(
     metadata: {
       model: modelName,
       fields: metadata?.fields || [],
-      total: await (Model as any).estimatedDocumentCount(query || {}),
+      total: await (Model as { estimatedDocumentCount: (q: object) => Promise<number> }).estimatedDocumentCount(query || {}),
       limit,
       skip
     }
@@ -94,14 +96,16 @@ export async function getModelListResource(
 export async function getModelRecordResource(
   modelName: string,
   id: string
-): Promise<any> {
+): Promise<unknown> {
+  const models = await modelsPromise;
   const Model = models[modelName];
   if (!Model) {
     throw new Error(`Model ${modelName} not found`);
   }
 
-  const metadata = getAllModelMetadata().find(m => m.name === modelName);
-  const record = await (Model as any).findById(id).lean();
+  const allMetadata = await getAllModelMetadata();
+  const metadata = allMetadata.find(m => m.name === modelName);
+  const record = await (Model as { findById: (id: string) => { lean: () => Promise<unknown> } }).findById(id).lean();
 
   if (!record) {
     throw new Error(`Record ${id} not found in ${modelName}`);
@@ -122,14 +126,16 @@ export async function getModelRecordResource(
 export async function getModelSearchResource(
   modelName: string,
   searchQuery: string
-): Promise<any> {
+): Promise<unknown> {
+  const models = await modelsPromise;
   const Model = models[modelName];
   if (!Model) {
     throw new Error(`Model ${modelName} not found`);
   }
 
-  const metadata = getAllModelMetadata().find(m => m.name === modelName);
-  const results = await (Model as any).search(searchQuery).lean();
+  const allMetadata = await getAllModelMetadata();
+  const metadata = allMetadata.find(m => m.name === modelName);
+  const results = await (Model as unknown as { search: (q: string) => { lean: () => Promise<unknown[]> } }).search(searchQuery).lean();
 
   return {
     data: results,

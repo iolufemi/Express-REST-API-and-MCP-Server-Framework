@@ -2,7 +2,6 @@ import cluster from 'cluster';
 import config from './config/index.js';
 import log from './services/logger/index.js';
 import express, { Express } from 'express';
-import router from './routes/index.js';
 import expressEnforcesSSL from 'express-enforces-ssl';
 import os from 'os';
 import { createUnifiedMCPServer } from './mcp/servers/unified.js';
@@ -33,9 +32,10 @@ async function startServer(): Promise<void> {
     }
 
     if (config.enforceSSL === 'yes') {
-      app.use(expressEnforcesSSL());
+      app.use(expressEnforcesSSL() as express.RequestHandler);
     }
 
+    const router = await import('./routes/index.js').then((m) => m.default);
     app.use('/', router);
 
     if (config.env === 'production' && cluster.worker) {
@@ -112,7 +112,7 @@ async function initializeMCPServers(): Promise<void> {
       }
     };
 
-    const mcpServer = createUnifiedMCPServer(mcpConfig);
+    const mcpServer = await createUnifiedMCPServer(mcpConfig);
     
     // Set the server in the registry
     mcpRegistry.setServer(mcpServer.server);

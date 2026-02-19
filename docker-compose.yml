@@ -7,6 +7,7 @@ services:
         restart: always
         environment:
             - MYSQL_ROOT_PASSWORD=command
+            - MYSQL_DATABASE=giro
         volumes:
             - mysql:/var/lib/mysql
         ports:

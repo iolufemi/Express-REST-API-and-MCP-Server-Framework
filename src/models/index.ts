@@ -1,36 +1,44 @@
 import _ from 'lodash';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { pathToFileURL } from 'url';
 import { ModelRegistry } from '../types/models.js';
 
-const models: ModelRegistry = {};
-const normalizedPath = path.join(__dirname, './');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const files = fs.readdirSync(normalizedPath);
-const filesCount = files.length;
-let count = 0;
-
-const associate = function(models: ModelRegistry): void {
-  _.forOwn(models, (value: any, _key: string) => {
-    if ((value as any).associate) {
-      (value as any).associate(models);
+const associate = function (modelMap: ModelRegistry): void {
+  _.forOwn(modelMap, (value: ModelRegistry[string], _key: string) => {
+    if (value && typeof (value as ModelRegistry[string] & { associate?: (m: ModelRegistry) => void }).associate === 'function') {
+      (value as ModelRegistry[string] & { associate: (m: ModelRegistry) => void }).associate(modelMap);
     }
   });
 };
 
-files.forEach((file) => {
-  count = count + 1;
-  const splitFileName = file.split('.');
-  if (splitFileName[0] !== 'index') {
-    const modelName = splitFileName[0];
-    // Import the model dynamically
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const modelModule = require('./' + modelName);
-    models[modelName] = modelModule.default || modelModule;
-  }
-  if (count === filesCount) {
-    associate(models);
-  }
-});
+async function loadModels(): Promise<ModelRegistry> {
+  const models: ModelRegistry = {};
+  const files = fs.readdirSync(__dirname);
+  const loadPromises: Promise<void>[] = [];
 
-export default models;
+  for (const file of files) {
+    const splitFileName = file.split('.');
+    if (splitFileName[0] === 'index') continue;
+    const modelName = splitFileName[0];
+    const ext = splitFileName[1] || 'js';
+    loadPromises.push(
+      import(pathToFileURL(path.join(__dirname, modelName + '.' + ext)).href)
+        .then((modelModule: { default?: unknown }) => {
+          models[modelName] = (modelModule.default ?? modelModule) as ModelRegistry[string];
+        })
+        .catch(() => {
+          // Skip failed module (e.g. not a model file)
+        })
+    );
+  }
+
+  await Promise.all(loadPromises);
+  associate(models);
+  return models;
+}
+
+export default loadModels();

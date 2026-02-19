@@ -63,6 +63,6 @@ schemaObject.retriedAt = {
 // Let us define our schema
 const SchemaDefinition = new mongoose.Schema(schemaObject);
 
-const Model = (db.api as any).model(collection, SchemaDefinition) as mongoose.Model<APICallDocument>;
+const Model = db.mongo.model(collection, SchemaDefinition) as unknown as mongoose.Model<APICallDocument>;
 
 export default Model;

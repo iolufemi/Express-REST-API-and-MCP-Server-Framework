@@ -32,7 +32,7 @@ declare module 'randomstring' {
 }
 
 declare module 'debug' {
-  function debug(namespace: string): (...args: any[]) => void;
+  function debug(namespace: string): (...args: unknown[]) => void;
   export = debug;
 }
 
@@ -47,44 +47,48 @@ declare module 'dotenv' {
 }
 
 declare module 'lodash' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- lodash has no @types; broad type needed for usage
   const _: any;
   export = _;
 }
 
 declare module 'express-limiter' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped package
   const limiter: any;
   export default limiter;
 }
 
 declare module 'hpp' {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped package
   const hpp: any;
   export default hpp;
 }
 
 declare module 'express-content-length-validator' {
-  const contentLength: any;
+  import { RequestHandler } from 'express';
+  const contentLength: { validateMax: (options: { max: number; status?: number; message?: string }) => RequestHandler };
   export default contentLength;
 }
 
 declare module 'fnv-plus' {
-  const fnv: any;
+  const fnv: { hash: (input: string | number, bits?: number) => { str: () => string } };
   export default fnv;
 }
 
 declare module 'cacheman' {
   class Cacheman {
-    constructor(name: string, options?: any);
-    get(key: string | string[]): Promise<any>;
-    set(key: string | string[], value: any, ttl?: number): Promise<any>;
-    del(key: string | string[]): Promise<any>;
-    clear(): Promise<any>;
+    constructor(name: string, options?: Record<string, unknown>);
+    get(key: string | string[]): Promise<unknown>;
+    set(key: string | string[], value: unknown, ttl?: number): Promise<unknown>;
+    del(key: string | string[]): Promise<unknown>;
+    clear(): Promise<unknown>;
   }
   export = Cacheman;
 }
 
 declare module 'cacheman-redis' {
   class EngineRedis {
-    constructor(options?: any);
+    constructor(options?: Record<string, unknown>);
   }
   export = EngineRedis;
 }
@@ -97,13 +101,13 @@ declare module 'shortid' {
 declare module 'winston-loggly-bulk' {
   import { TransportStream } from 'winston';
   class WinstonLoggly extends TransportStream {
-    constructor(options: any);
+    constructor(options: Record<string, unknown>);
   }
   export = WinstonLoggly;
 }
 
 declare module 'express-enforces-ssl' {
-  function enforceSSL(): any;
+  function enforceSSL(): unknown;
   export = enforceSSL;
 }
 

@@ -13,11 +13,11 @@ export interface MCPToolDefinition extends Omit<Tool, 'handler' | 'inputSchema'>
   description: string;
   inputSchema: {
     type: 'object';
-    properties?: Record<string, any>;
+    properties?: Record<string, unknown>;
     required?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  handler: (args: any) => Promise<any>;
+  handler: (args: unknown) => Promise<unknown>;
 }
 
 /**
@@ -79,8 +79,8 @@ export interface SchemaFieldMetadata {
   description?: string;
   mcpDescription?: string;
   required?: boolean;
-  enum?: any[];
-  default?: any;
+  enum?: unknown[];
+  default?: unknown;
   constraints?: {
     min?: number;
     max?: number;

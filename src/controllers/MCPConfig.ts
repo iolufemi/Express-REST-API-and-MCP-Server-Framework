@@ -50,7 +50,7 @@ const MCPConfigController = {
       // Get MCP server information
       const registeredServices = mcpRegistry.getRegisteredServices();
       const controllerMethods = await discoverAllControllerMethods();
-      const modelMetadata = getAllModelMetadata();
+      const modelMetadata = await getAllModelMetadata();
 
       // Build tools list (include both exposed methods and default CRUD methods)
       const tools = controllerMethods
@@ -89,7 +89,7 @@ const MCPConfigController = {
         : `${baseUrl}/mcp/http`;
 
       // Generate configuration based on format
-      let mcpConfig: any;
+      let mcpConfig: Record<string, unknown>;
 
       switch (format) {
         case 'claude':
@@ -187,9 +187,9 @@ const MCPConfigController = {
       }
 
       res.status(200).json(mcpConfig);
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error('Error generating MCP config:', err);
-      next(err);
+      next(err instanceof Error ? err : new Error(String(err)));
     }
   },
 
@@ -207,7 +207,7 @@ const MCPConfigController = {
     try {
       const registeredServices = mcpRegistry.getRegisteredServices();
       const controllerMethods = await discoverAllControllerMethods();
-      const modelMetadata = getAllModelMetadata();
+      const modelMetadata = await getAllModelMetadata();
 
       const info = {
         server: {
@@ -251,9 +251,9 @@ const MCPConfigController = {
       };
 
       res.status(200).json(info);
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error('Error getting MCP info:', err);
-      next(err);
+      next(err instanceof Error ? err : new Error(String(err)));
     }
   }
 };

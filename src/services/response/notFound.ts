@@ -4,7 +4,7 @@ import { ExpressRequest, ExpressResponse } from '../../types/express.js';
 export default function notFound(this: ExpressResponse): void {
   log.warn('Sending 404 response: ' + 'not found');
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = { response: { status: 'error', message: 'not found' } };

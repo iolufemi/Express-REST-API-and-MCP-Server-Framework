@@ -4,7 +4,7 @@ import { ExpressRequest, ExpressResponse } from '../../types/express.js';
 export default function badRequest(this: ExpressResponse, data?: any, message?: string): void {
   log.warn('Sending bad request response: ', data, message || 'bad request');
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = { response: { status: 'error', data: data, message: message ? message : 'bad request' } };

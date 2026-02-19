@@ -10,7 +10,7 @@ const debugLog = debug(collection);
 // Queue will be imported after Bull migration
 // import queue from '../services/queue/index.js';
 
-const schemaObject: Record<string, SchemaFieldDefinition | any> = {
+const schemaObject: Record<string, SchemaFieldDefinition | unknown> = {
   RequestId: {
     type: String,
     unique: true,
@@ -129,9 +129,9 @@ SchemaDefinition.statics.search = function(string: string) {
 };
 
 // Adding hooks
-SchemaDefinition.pre('save', function(this: mongoose.Document, next: () => void) {
+SchemaDefinition.pre('save', function(this: mongoose.Document & { _doc?: Record<string, unknown> }, next: () => void) {
   // Indexing for search
-  const ourDoc = (this as any)._doc;
+  const ourDoc = this._doc ?? {};
   ourDoc.model = collection;
 
   // Queue job will be handled by Bull later
@@ -165,13 +165,13 @@ SchemaDefinition.post('validate', function() {
   debugLog('this gets printed second');
 });
 
-SchemaDefinition.pre('find', function(this: mongoose.Query<any, any>, next: () => void) {
+SchemaDefinition.pre('find', function(this: mongoose.Query<unknown, unknown> & { start?: number }, next: () => void) {
   debugLog(this instanceof mongoose.Query); // true
-  (this as any).start = Date.now();
+  this.start = Date.now();
   next();
 });
 
-SchemaDefinition.post('find', function(this: mongoose.Query<any, any> & { start?: number }, result: any) {
+SchemaDefinition.post('find', function(this: mongoose.Query<unknown, unknown> & { start?: number }, result: unknown) {
   debugLog(this instanceof mongoose.Query); // true
   // prints returned documents
   debugLog('find() returned ' + JSON.stringify(result));
@@ -179,9 +179,9 @@ SchemaDefinition.post('find', function(this: mongoose.Query<any, any> & { start?
   debugLog('find() took ' + ((Date.now() - (this.start || 0)) + ' millis'));
 });
 
-SchemaDefinition.pre(['updateOne', 'updateMany'], function(this: mongoose.Query<any, any>, next: () => void) {
+SchemaDefinition.pre(['updateOne', 'updateMany'], function(this: mongoose.Query<unknown, unknown> & { _update?: Record<string, unknown> }, next: () => void) {
   // Indexing for search
-  const ourDoc = (this as any)._update;
+  const ourDoc = this._update ?? {};
   ourDoc.updatedAt = new Date(Date.now()).toISOString();
   next();
 });
@@ -192,11 +192,11 @@ interface RequestLogDocument extends Document {
   url: string;
   method: string;
   service: string;
-  body?: any;
+  body?: unknown;
   app?: Schema.Types.ObjectId;
   user?: Schema.Types.ObjectId;
   device?: string;
-  response?: any;
+  response?: unknown;
   createdAt?: Date;
   updatedAt?: Date;
   owner?: Schema.Types.ObjectId;
@@ -207,10 +207,10 @@ interface RequestLogDocument extends Document {
 }
 
 interface RequestLogModel extends MongooseModel<RequestLogDocument> {
-  search(string: string): any;
+  search(string: string): mongoose.Query<RequestLogDocument[], RequestLogDocument>;
 }
 
-const Model = db.logMongo.model<RequestLogDocument, RequestLogModel>(collection, SchemaDefinition) as RequestLogModel;
-(Model as any)._mongoose = mongoose;
+const Model = db.logMongo.model<RequestLogDocument, RequestLogModel>(collection, SchemaDefinition);
+(Model as unknown as MongooseModel<RequestLogDocument> & { _mongoose: typeof mongoose })._mongoose = mongoose;
 
 export default Model;

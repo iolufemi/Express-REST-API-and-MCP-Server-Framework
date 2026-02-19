@@ -157,15 +157,15 @@ export function buildModelMetadata(
     fields.push({
       name: pathName,
       type: typeStr,
-      description: pathDef.description,
-      mcpDescription: pathDef.mcpDescription,
+      description: pathDef.description as string | undefined,
+      mcpDescription: pathDef.mcpDescription as string | undefined,
       required: pathDef.required ?? false,
       enum: pathDef.enum,
       default: pathDef.default,
       constraints: {
         min: pathDef.min,
         max: pathDef.max,
-        pattern: pathDef.pattern
+        pattern: pathDef.pattern as string | undefined
       }
     });
   }
@@ -173,8 +173,8 @@ export function buildModelMetadata(
   return {
     name: modelName,
     fields,
-    description: options.description,
-    mcpDescription: options.mcpDescription
+    description: typeof options.description === 'string' ? options.description : undefined,
+    mcpDescription: typeof options.mcpDescription === 'string' ? options.mcpDescription : undefined
   };
 }
 
@@ -215,10 +215,10 @@ export async function discoverSchemaForApiModel(
   }
 
   const existingSchema = model?._schema;
-  const options = existingSchema?.options
+  const options: { description?: string; mcpDescription?: string } = existingSchema?.options
     ? {
-        description: (existingSchema.options as any).description,
-        mcpDescription: (existingSchema.options as any).mcpDescription
+        description: typeof (existingSchema.options).description === 'string' ? (existingSchema.options).description : undefined,
+        mcpDescription: typeof (existingSchema.options).mcpDescription === 'string' ? (existingSchema.options).mcpDescription : undefined
       }
     : {};
 

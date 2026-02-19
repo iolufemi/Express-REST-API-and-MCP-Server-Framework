@@ -18,16 +18,16 @@ export function extractFieldMetadata(
 ): SchemaFieldMetadata {
   return {
     name: fieldName,
-    type: typeof fieldDef.type === 'string' ? fieldDef.type : fieldDef.type?.name || 'Mixed',
-    description: fieldDef.description,
-    mcpDescription: fieldDef.mcpDescription,
+    type: typeof fieldDef.type === 'string' ? fieldDef.type : (fieldDef.type && typeof fieldDef.type === 'object' && 'name' in fieldDef.type ? (fieldDef.type as { name?: string }).name : undefined) || 'Mixed',
+    description: fieldDef.description as string | undefined,
+    mcpDescription: fieldDef.mcpDescription as string | undefined,
     required: fieldDef.required || false,
     enum: fieldDef.enum,
     default: fieldDef.default,
     constraints: {
       min: fieldDef.min,
       max: fieldDef.max,
-      pattern: fieldDef.pattern
+      pattern: fieldDef.pattern as string | undefined
     }
   };
 }
@@ -56,8 +56,8 @@ export function extractMongooseModelMetadata(
         unique: path.unique || false,
         default: path.defaultValue,
         enum: path.enumValues,
-        description: (path.options as any)?.description,
-        mcpDescription: (path.options as any)?.mcpDescription
+        description: (path.options)?.description,
+        mcpDescription: (path.options)?.mcpDescription
       };
 
       fields.push(extractFieldMetadata(pathName, fieldDef));
@@ -67,8 +67,8 @@ export function extractMongooseModelMetadata(
       name: modelName,
       collection: (model as any).collection?.name,
       fields,
-      description: (schema.options as any)?.description,
-      mcpDescription: (schema.options as any)?.mcpDescription
+      description: (schema.options)?.description,
+      mcpDescription: (schema.options)?.mcpDescription
     };
   } catch (error) {
     console.error(`Error extracting metadata from model ${modelName}:`, error);
@@ -122,7 +122,7 @@ export function extractApiModelMetadata(
   model: any
 ): ModelMetadata | null {
   try {
-    const schema = (model as any)._schema;
+    const schema = (model)._schema;
     if (!schema || !schema.paths) {
       return null;
     }
@@ -148,8 +148,8 @@ export function extractApiModelMetadata(
     return {
       name: modelName,
       fields,
-      description: (schema.options as any)?.description,
-      mcpDescription: (schema.options as any)?.mcpDescription
+      description: (schema.options)?.description,
+      mcpDescription: (schema.options)?.mcpDescription
     };
   } catch (error) {
     console.error(`Error extracting metadata from API model ${modelName}:`, error);

@@ -11,8 +11,8 @@ import { getAllModelMetadata } from '../../utils/model-metadata.js';
 /**
  * Register model tools with MCP server
  */
-export function registerModelTools(_server: Server): void {
-  const modelMetadata = getAllModelMetadata();
+export async function registerModelTools(_server: Server): Promise<void> {
+  const modelMetadata = await getAllModelMetadata();
 
   modelMetadata.forEach((meta) => {
     const modelName = meta.name;

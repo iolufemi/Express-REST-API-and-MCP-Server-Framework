@@ -6,6 +6,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import mcpRegistry from './registry.js';
 import log from '../services/logger/index.js';
 
@@ -26,15 +27,15 @@ export async function autoRegisterServices(servicesDir: string = path.join(__dir
 
     for (const file of serviceFiles) {
       const serviceName = path.basename(file, path.extname(file));
-      const filePath = path.join(servicesDir, file);
 
       try {
-        // Dynamically require the service registration
-        const serviceModule = require(filePath);
-        const registration = serviceModule.default || serviceModule.register;
+        const absolutePath = path.resolve(servicesDir, file);
+        const serviceModule = await import(pathToFileURL(absolutePath).href);
+        const registration = (serviceModule as { default?: unknown; register?: unknown }).default
+          ?? (serviceModule as { default?: unknown; register?: unknown }).register;
 
         if (typeof registration === 'function') {
-          mcpRegistry.register(serviceName, registration);
+          mcpRegistry.register(serviceName, registration as Parameters<typeof mcpRegistry.register>[1]);
           log.info(`Auto-registered MCP service: ${serviceName}`);
         } else {
           log.warn(`Service file ${file} does not export a registration function`);

@@ -12,8 +12,8 @@ const InitializeController = {
     try {
       const resp = await encryption.generateKey();
       res.ok?.({ 'x-tag': resp });
-    } catch (err: any) {
-      next(err);
+    } catch (err: unknown) {
+      next(err instanceof Error ? err : new Error(String(err)));
     }
   }
 };

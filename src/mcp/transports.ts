@@ -21,7 +21,7 @@ export function createStdioTransport(server: McpServer): TransportHandler {
   const transport = new StdioServerTransport({
     command: process.argv[0],
     args: process.argv.slice(1)
-  } as any);
+  } as unknown as ConstructorParameters<typeof StdioServerTransport>[0]);
 
   return {
     start: async () => {

@@ -14,9 +14,9 @@ import log from '../../services/logger/index.js';
 /**
  * Create unified MCP server combining all sub-servers
  */
-export function createUnifiedMCPServer(config: MCPServerConfig): MCPServerInstance {
+export async function createUnifiedMCPServer(config: MCPServerConfig): Promise<MCPServerInstance> {
   // Create individual servers
-  const modelsServer = createModelsMCPServer({ ...config, name: 'models-mcp-server' });
+  const modelsServer = await createModelsMCPServer({ ...config, name: 'models-mcp-server' });
   // Note: controllersServer and servicesServer are created but not yet merged into unified server
   // This is a placeholder for future full implementation
   void createControllersMCPServer({ ...config, name: 'controllers-mcp-server' });

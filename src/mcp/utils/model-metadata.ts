@@ -1,17 +1,18 @@
 /**
  * Model-level metadata utilities
- * 
+ *
  * Provides model-level information for MCP resources
  */
 
 import type { ModelMetadata } from '../../types/models.js';
-import models from '../../models/index.js';
+import modelsPromise from '../../models/index.js';
 import { extractAllModelMetadata } from './schema-metadata.js';
 
 /**
  * Get metadata for a specific model
  */
-export function getModelMetadata(modelName: string): ModelMetadata | null {
+export async function getModelMetadata(modelName: string): Promise<ModelMetadata | null> {
+  const models = await modelsPromise;
   const allMetadata = extractAllModelMetadata(models);
   return allMetadata.find(m => m.name === modelName) || null;
 }
@@ -19,18 +20,19 @@ export function getModelMetadata(modelName: string): ModelMetadata | null {
 /**
  * Get metadata for all models
  */
-export function getAllModelMetadata(): ModelMetadata[] {
+export async function getAllModelMetadata(): Promise<ModelMetadata[]> {
+  const models = await modelsPromise;
   return extractAllModelMetadata(models);
 }
 
 /**
  * Get field metadata for a specific field in a model
  */
-export function getFieldMetadata(
+export async function getFieldMetadata(
   modelName: string,
   fieldName: string
-): import('../../types/models.js').SchemaFieldMetadata | null {
-  const modelMeta = getModelMetadata(modelName);
+): Promise<import('../../types/models.js').SchemaFieldMetadata | null> {
+  const modelMeta = await getModelMetadata(modelName);
   if (!modelMeta) {
     return null;
   }

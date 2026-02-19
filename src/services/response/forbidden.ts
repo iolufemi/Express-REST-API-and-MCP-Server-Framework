@@ -4,7 +4,7 @@ import { ExpressRequest, ExpressResponse } from '../../types/express.js';
 export default function forbidden(this: ExpressResponse, data?: any, message?: string): void {
   log.warn('Sending forbidden response: ', data, message || 'forbidden');
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = { response: { status: 'error', data: data, message: message ? message : 'forbidden' } };

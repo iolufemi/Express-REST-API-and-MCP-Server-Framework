@@ -1,57 +1,46 @@
-'use strict';
-var chai = require('chai');
+import chai from 'chai';
 chai.should();
-var config = require('../../config');
-var chaiAsPromised = require("chai-as-promised");
+import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
-var request = require('supertest');
-var sinon = require("sinon");
-var sinonChai = require("sinon-chai");
-var mongoose = require('mongoose');
+import request from 'supertest';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
+import mongoose from 'mongoose';
 chai.use(sinonChai);
-var _ = require('lodash');
+import _ from 'lodash';
 
-var response = require('../../services/response');
+import response from '../../src/services/response/index.js';
+import express from 'express';
+import bodyParser from 'body-parser';
+import routers from '../../src/routes/index.js';
 
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser');
-var initRouter = require('../../routes/initialize');
-var routers = require('../../routes');
-
+const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(response);
 app.use(routers);
 
+const agent = request.agent(app);
 
-var agent = request.agent(app);
-var requestId;
-
-var res = {};
-var req = {};
-
-var nextChecker = false;    
-var next = function(){
+const res = {};
+const req = {};
+let nextChecker = false;
+const next = function(){
     if(arguments.length > 0){
         console.log(arguments);
     }else{
         nextChecker = true;
     }
-    
     return nextChecker;
 };
 res.json = function(data){
     return res;
 };
-
 res.badRequest = sinon.spy();
-
 res.status = function(status){
     return res;
 };
-
-var header = {};
+const header = {};
 res.set = function(key, value){
     header[key] = value;
     return header[key];
@@ -59,38 +48,33 @@ res.set = function(key, value){
 req.get = function(key){
     return header[key];
 };
-
 header.set = function(data){
     header.temp = data;
     return header.temp;
 };
-
 req.method = '';
 
-var tag;
-var objId1 = mongoose.Types.ObjectId('59abab38ead925031a71496d');
-var objId2 = mongoose.Types.ObjectId('59abab38ead925031a71496e');
-var objId3 = mongoose.Types.ObjectId('59abab38ead925031a71496c');
-var last;
-var oneId;
-var oneId2;
-var from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
+let tag;
+const objId1 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496d');
+const objId2 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496e');
+const objId3 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496c');
+let last;
+let oneId;
+let oneId2;
+const from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
 describe('/<%= object %>s', function(){
 
-    before(function(done){ /* jslint ignore:line */
-        var workers = require('../../services/queue/workers');
-        var workers2 = require('../../services/queue/workers');
-        var workers3 = require('../../services/queue/workers');
-
-        agent
-        .get('/initialize')
-        .then(function(resp){
-
-            tag = resp.body.data['x-tag'];
-            done();
-        })
-        .catch(function(err){
-            done(err);
+    before(function(done){
+        import('../../src/services/queue/workers.js').then(() => {
+            agent
+            .get('/initialize')
+            .then(function(resp){
+                tag = resp.body.data['x-tag'];
+                done();
+            })
+            .catch(function(err){
+                done(err);
+            });
         });
     });
 
@@ -100,7 +84,6 @@ describe('/<%= object %>s', function(){
         .set('x-tag',tag)
         .send({name: 'femi2'})
         .then(function(resp){
-            
             oneId = resp.body.data._id;
             done();
         })
@@ -161,7 +144,6 @@ describe('/<%= object %>s', function(){
             .get('/<%= object %>s?limit=2')
             .set('x-tag',tag)
             .then(function(resp){
-                
                 last = resp.body.lastId;
                 resp.body.lastId.should.exist; /* jslint ignore:line */
                 done();
@@ -188,35 +170,8 @@ describe('/<%= object %>s', function(){
             .set('x-tag',tag)
             .expect(200,done);
         });
-        // it('should populate data of a reference for multiple data', function(done){
-        //     agent
-        //     .get('/<%= object %>s?populate=toPop')
-        //     .set('x-tag',tag)
-        //     .then(function(resp){
-        //         _.forEach(resp.body.data, function(value){
-        //             if(value._id === oneId2){
-        //                 value.toPop.should.be.an('object');
-        //             }
-        //         });
-        //         done();
-        //     })
-        //     .catch(function(err){
-        //         done(err);
-        //     });
-        // });
-
-        // it('should populate data of a reference for single data', function(done){
-        //     agent
-        //     .get('/<%= object %>s/'+oneId2+'?populate=toPop')
-        //     .set('x-tag',tag)
-        //     .then(function(resp){
-        //         resp.body.data.toPop.should.be.an('object');
-        //         done();
-        //     })
-        //     .catch(function(err){
-        //         done(err);
-        //     });
-        // });
+        // it('should populate data of a reference for multiple data', function(done){ ... });
+        // it('should populate data of a reference for single data', function(done){ ... });
 
         it('should load next page for pagination', function(done){
             agent
@@ -296,7 +251,6 @@ describe('Delete', function(){
         .delete('/<%= object %>s?name=femi2')
         .set('x-tag',tag)
         .then(function(resp){
-
             resp.body.data.should.be.an('array');
             done();
         })
@@ -321,23 +275,26 @@ describe('Delete', function(){
 
 describe('Restore', function(){
     it('should restore a previously deleted data', function(done){
-        var Trash = require('../../models').Trash;
-        var tid = oneId;
-        setTimeout(function(){
-            Trash.findOne({'data._id': tid})
-            .then(function(resp){
-                return agent
-                .post('/<%= object %>s/'+resp._id+'/restore')
-                .set('x-tag',tag);
-            })
-            .then(function(resp){
-                resp.body.data.should.be.an('object');
-                done();
-            })
-            .catch(function(err){
-                done(err);
-            });
-        },5000);
+        import('../../src/models/index.js').then((m) => {
+            const models = m.default;
+            const Trash = models.Trash;
+            const tid = oneId;
+            setTimeout(function(){
+                Trash.findOne({'data._id': tid})
+                .then(function(resp){
+                    return agent
+                    .post('/<%= object %>s/'+resp._id+'/restore')
+                    .set('x-tag',tag);
+                })
+                .then(function(resp){
+                    resp.body.data.should.be.an('object');
+                    done();
+                })
+                .catch(function(err){
+                    done(err);
+                });
+            },5000);
+        }).catch(done);
     });
 });
 });

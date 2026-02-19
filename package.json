@@ -8,10 +8,11 @@
     "dev": "npx tsx watch src/app.ts",
     "build": "rm -rf dist && npx tsc -p tsconfig.build.json",
     "start": "node dist/app.js",
-    "test": "TSX_SKIP_TYPE_CHECK=true NODE_OPTIONS='--import tsx' npx mocha --import test/setup.ts 'test/**/*.test.ts' --reporter spec",
-    "test:watch": "TSX_SKIP_TYPE_CHECK=true NODE_OPTIONS='--import tsx' npx mocha --import test/setup.ts --watch 'test/**/*.test.ts' --reporter spec",
-    "test:coverage": "TSX_SKIP_TYPE_CHECK=true NODE_OPTIONS='--import tsx' npx c8 --reporter=text --reporter=lcov npx mocha --import test/setup.ts 'test/**/*.test.ts' --reporter spec",
+    "test": "node test/run.mjs",
+    "test:watch": "node test/run.mjs --watch",
+    "test:coverage": "npx c8 --reporter=text --reporter=lcov node test/run.mjs",
     "test:save": "npm test 2>&1 | tee test-results.txt",
+    "test:simple": "node test/run.mjs --no-config --node-option import=tsx --node-option import=test/setup.ts test/simple.test.ts --reporter spec --timeout 20000",
     "lint": "npx eslint src/**/*.ts",
     "type-check": "npx tsc --noEmit",
     "clock": "npx tsx src/services/queue/clock.ts",
@@ -21,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EnsembleLab/api-template.git"
+    "url": "git+https://github.com/iolufemi/api-template.git"
   },
   "keywords": [
     "REST",
@@ -30,9 +31,9 @@
   "author": "Olufemi Olanipekun <iolufemi@ymail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/EnsembleLab/api-template/issues"
+    "url": "https://github.com/iolufemi/api-template/issues"
   },
-  "homepage": "https://github.com/EnsembleLab/api-template#readme",
+  "homepage": "https://github.com/iolufemi/api-template#readme",
   "devDependencies": {
     "@types/chai": "^4.3.15",
     "@types/cors": "^2.8.17",
@@ -106,9 +107,5 @@
     "winston": "^3.15.1",
     "winston-loggly-bulk": "^2.0.2",
     "zod": "^3.23.8"
-  },
-  "mocha": {
-    "recursive": true,
-    "timeout": 20000
   }
 }

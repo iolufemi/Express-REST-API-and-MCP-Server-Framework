@@ -41,7 +41,7 @@ async function closeDatabaseConnections(): Promise<void> {
         })
       );
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Error closing main MongoDB:', err);
   }
 
@@ -55,7 +55,7 @@ async function closeDatabaseConnections(): Promise<void> {
         })
       );
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Error closing log MongoDB:', err);
   }
 
@@ -65,12 +65,12 @@ async function closeDatabaseConnections(): Promise<void> {
       closePromises.push(
         redis.quit().then(() => {
           log.info('Redis connection closed');
-        }).catch((err: any) => {
+        }).catch((err: unknown) => {
           log.error('Error closing Redis:', err);
         })
       );
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Error closing Redis:', err);
   }
 
@@ -79,11 +79,11 @@ async function closeDatabaseConnections(): Promise<void> {
     closePromises.push(
       sql.close().then(() => {
         log.info('SQL connection closed');
-      }).catch((err: any) => {
+      }).catch((err: unknown) => {
         log.error('Error closing SQL:', err);
       })
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.warn('Error closing SQL (may not be connected):', err);
   }
 
@@ -112,7 +112,7 @@ async function closeQueueConnections(): Promise<void> {
     try {
       const queue = getQueue(queueName);
       closePromises.push(queue.close());
-    } catch (err: any) {
+    } catch (err: unknown) {
       log.error(`Error closing queue ${queueName}:`, err);
     }
   }
@@ -163,7 +163,7 @@ export async function gracefulShutdown(signal: string): Promise<void> {
 
     log.info('Graceful shutdown complete');
     process.exit(0);
-  } catch (err: any) {
+  } catch (err: unknown) {
     log.error('Error during graceful shutdown:', err);
     process.exit(1);
   }
@@ -202,7 +202,7 @@ export function setupShutdownHandlers(httpServer?: Server): void {
   });
 
   // Handle unhandled promise rejections
-  process.once('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  process.once('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
     log.error('Unhandled rejection at:', promise, 'reason:', reason);
     gracefulShutdown('unhandledRejection').catch(() => {
       process.exit(1);

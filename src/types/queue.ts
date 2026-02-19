@@ -8,7 +8,7 @@ import { Job, Queue, QueueOptions } from 'bull';
  * Queue job data types
  */
 export interface QueueJobData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -31,7 +31,7 @@ export interface SearchIndexJobData extends QueueJobData {
   model: string;
   isSQL?: boolean;
   update?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -42,7 +42,7 @@ export interface RequestLogJobData extends QueueJobData {
   ipAddress: string;
   url: string;
   method: string;
-  body: any;
+  body: unknown;
   app?: string;
   user?: string;
   device?: string;
@@ -54,9 +54,9 @@ export interface RequestLogJobData extends QueueJobData {
  */
 export interface ResponseLogJobData extends QueueJobData {
   requestId: string;
-  response?: any;
+  response?: unknown;
   statusCode?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -64,7 +64,7 @@ export interface ResponseLogJobData extends QueueJobData {
  */
 export interface TrashJobData extends QueueJobData {
   service: string;
-  data: any;
+  data: unknown;
   owner?: string;
   deletedBy?: string;
   client?: string;
@@ -77,7 +77,7 @@ export interface TrashJobData extends QueueJobData {
 export interface WebhookJobData extends QueueJobData {
   reference: string;
   webhookURL: string;
-  data: any;
+  data: unknown;
 }
 
 /**
@@ -87,7 +87,7 @@ export interface HTTPRequestJobData extends QueueJobData {
   url: string;
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
-  data?: any;
+  data?: unknown;
 }
 
 /**
@@ -98,7 +98,7 @@ export interface ClockJobConfig {
   name: string;
   job: string;
   enabled: boolean;
-  arguments?: any;
+  arguments?: unknown;
   lastRunAt?: Date;
 }
 

@@ -9,7 +9,7 @@ const debugLog = debug('response');
 export default function ok(this: ExpressResponse, data: any, cache?: boolean, extraData?: any): void {
   debugLog('sending ok response');
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = {};

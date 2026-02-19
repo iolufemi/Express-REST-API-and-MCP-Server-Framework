@@ -1,16 +1,12 @@
-'use strict';
-
-var chai = require('chai');
+import chai from 'chai';
 chai.should();
-var expect = chai.expect;
-var chaiAsPromised = require("chai-as-promised");
+const { expect } = chai;
+import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
-var <%= object %>s = require('../../controllers/<%= service %>s.js');
-var workers = require('../../services/queue/workers');
-var workers2 = require('../../services/queue/workers');
-var workers3 = require('../../services/queue/workers');
-var _ = require('lodash');
-var db = require('../../models');
+import <%= object %>s from '../../src/controllers/<%= service %>s.js';
+import '../../src/services/queue/workers.js';
+import _ from 'lodash';
+import db from '../../src/models/index.js';
 
 
 var <%= object %>Id;

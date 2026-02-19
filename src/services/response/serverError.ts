@@ -5,7 +5,7 @@ export default function serverError(this: ExpressResponse, data?: any, message?:
   log.error('sending server error response: ', data, message || 'server error');
 
   const req = this.req as ExpressRequest;
-  const res = this as ExpressResponse;
+  const res = this;
 
   // Dump it in the queue
   const response: any = { response: { status: 'error', data: data, message: message ? message : 'server error' } };

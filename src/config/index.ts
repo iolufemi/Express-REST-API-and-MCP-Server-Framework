@@ -7,8 +7,8 @@ const config: Config = {
   env: env.NODE_ENV,
   port: isProduction ? 80 : env.PORT,
   trustProxy: isProduction ? 'yes' : env.TRUST_PROXY,
-  bugsnagKey: env.BUGSNAG_KEY as string | false,
-  secureMode: isProduction ? true : (env.SECURE_MODE as string | boolean),
+  bugsnagKey: env.BUGSNAG_KEY,
+  secureMode: isProduction ? true : (env.SECURE_MODE),
   secret: env.SECRET,
   mongoURL: isProduction ? 'mongodb://192.168.99.100/snipe' : env.MONGOLAB_URL,
   logMongoURL: isProduction ? 'mongodb://192.168.99.100/snipelogs' : env.LOG_MONGOLAB_URL,
@@ -31,7 +31,7 @@ const config: Config = {
   SQLUsername: env.SQL_USERNAME,
   SQLPassword: isProduction && (process.env.SQL_PASSWORD === undefined || process.env.SQL_PASSWORD === '')
     ? null
-    : (env.SQL_PASSWORD as string | null),
+    : (env.SQL_PASSWORD),
   SQLDatabase: env.SQL_DATABASE,
   SQLHost: isProduction ? '192.168.99.100' : env.SQL_HOST,
   SQLPort: env.SQL_PORT,
@@ -39,9 +39,9 @@ const config: Config = {
   SQLTimezone: env.SQL_TIMEZONE,
   clockTimezone: env.CLOCK_TIMEZONE,
   workerConcurrency: env.WORKER_CONCURRENCY,
-  logglyToken: env.LOGGLY_TOKEN as string | false,
-  logglySubdomain: env.LOGGLY_SUBDOMAIN as string | false,
-  logglyTag: env.LOGGLY_TAG as string | false,
+  logglyToken: env.LOGGLY_TOKEN,
+  logglySubdomain: env.LOGGLY_SUBDOMAIN,
+  logglyTag: env.LOGGLY_TAG,
   cleanUpFailedJobs: env.CLEANUP_FAILED_JOBS
 };
 
