@@ -14,6 +14,9 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+# Test output capture
+test-results.txt
+
 # nyc test coverage
 .nyc_output
 
@@ -38,3 +41,15 @@ jspm_packages
 
 #Mac
 .DS_Store
+
+# TypeScript build outputs
+dist/
+dist-test/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

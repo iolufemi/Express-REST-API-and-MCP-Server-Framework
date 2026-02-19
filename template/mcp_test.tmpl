@@ -1,0 +1,33 @@
+/**
+ * MCP Tests for <%= service %>
+ * 
+ * Auto-generated test file for <%= service %> MCP integration
+ */
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import register<%= service %>Service from '../../src/mcp/services/<%= registrationBasename %>.registration.js';
+
+describe('<%= service %> MCP Integration', () => {
+  let server: McpServer;
+
+  beforeEach(() => {
+    server = new McpServer(
+      {
+        name: 'test-<%= registrationBasename %>-mcp',
+        version: '1.0.0'
+      },
+      {
+        capabilities: {
+          resources: {},
+          tools: {}
+        }
+      }
+    );
+  });
+
+  it('should register <%= service %> MCP service', async () => {
+    await register<%= service %>Service(server);
+  });
+
+  // Add more tests for resources and tools
+});
