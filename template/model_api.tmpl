@@ -1,10 +1,62 @@
-"use strict";
+import ApiModel from '../services/database/api.js';
+import { SchemaFieldDefinition } from '../types/models.js';
 
-var Db = require('../services/database').api;
+/**
+ * Schema definition for <%= service %> model
+ * 
+ * Define the structure of data returned by the external API.
+ * This schema is used by MCP to provide context about the data structure.
+ * 
+ * Add fields that match the structure of data returned from: <%= baseurl %>/<%= endpoint %>
+ */
+const schemaObject: Record<string, SchemaFieldDefinition> = {
+    // ++++++++++++++ Modify to match your API response structure ++++++++++++++++++
+    // Example fields - replace with actual fields from your API
+    id: {
+        type: String,
+        description: 'Unique identifier',
+        mcpDescription: 'Unique identifier for the record returned from the external API'
+    },
+    name: {
+        type: String,
+        description: 'Name field description',
+        mcpDescription: 'Detailed description for LLM context about what this name field represents and how it\'s used'
+    },
+    // Add more fields based on your API response structure
+    // ++++++++++++++ Modify to match your API response structure ++++++++++++++++++
+};
 
-var Model = new Db('<%= baseurl %>','<%= endpoint %>'/*, {
+// Standard fields that may be present in API responses
+schemaObject.createdAt = {
+    type: Date,
+    description: 'Creation timestamp',
+    mcpDescription: 'Date and time when the record was created. May be provided by the external API.'
+};
+
+schemaObject.updatedAt = {
+    type: Date,
+    description: 'Update timestamp',
+    mcpDescription: 'Date and time when the record was last updated. May be provided by the external API.'
+};
+
+// Attach schema to the model for MCP metadata extraction
+const Model = new ApiModel('<%= baseurl %>', '<%= endpoint %>'/*, {
     authorization: '72624642hfbsbsyrwywr'
 }*/);
 
-Model._mongoose = Db._mongoose;
-module.exports = Model;
+// Expose base URL and endpoint for schema discovery (GET {baseurl}/{endpoint}/schema)
+(Model as any)._baseurl = '<%= baseurl %>';
+(Model as any)._endpoint = '<%= endpoint %>';
+
+// Attach schema definition to the model instance for MCP (fallback when discovery fails)
+(Model as any)._schema = {
+    paths: schemaObject,
+    options: {
+        description: '<%= service %> model from external API',
+        mcpDescription: 'Data model fetched from external API at <%= baseurl %>/<%= endpoint %>. This model represents the structure of data returned by the external service.'
+    }
+};
+
+(Model as any)._mongoose = (ApiModel as any)._mongoose;
+
+export default Model;

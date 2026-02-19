@@ -1,0 +1,140 @@
+/**
+ * MCP Model Resources and Tools for <%= service %>
+ * 
+ * Auto-generated MCP integration for <%= service %> model
+ * This file exposes <%= service %> data as MCP resources and tools
+ */
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Resource, Tool } from '@modelcontextprotocol/sdk/types.js';
+import models from '../../models/index.js';
+import { getModelMetadata } from '../../mcp/utils/model-metadata.js';
+
+const modelName = '<%= service %>s';
+const modelNameLower = '<%= service.toLowerCase() %>s';
+
+/**
+ * Register <%= service %> resources with MCP server
+ */
+export function register<%= service %>Resources(server: McpServer): void {
+  const metadata = getModelMetadata(modelName);
+
+  // Resource handlers would be registered here
+  // @ts-ignore - Placeholder for future implementation
+  const listResource: Resource = {
+    uri: `${modelNameLower}://list`,
+    name: `List ${modelName}`,
+    description: metadata?.description || `List all ${modelName} records with pagination support`,
+    mimeType: 'application/json'
+  };
+
+  // @ts-ignore - Placeholder for future implementation
+  const recordResource: Resource = {
+    uri: `${modelNameLower}://{id}`,
+    name: `Get ${modelName} by ID`,
+    description: metadata?.description || `Get a specific ${modelName} record by ID`,
+    mimeType: 'application/json'
+  };
+
+  // @ts-ignore - Placeholder for future implementation
+  const searchResource: Resource = {
+    uri: `${modelNameLower}://search`,
+    name: `Search ${modelName}`,
+    description: `Search ${modelName} records with full-text search`,
+    mimeType: 'application/json'
+  };
+}
+
+/**
+ * Register <%= service %> tools with MCP server
+ */
+export function register<%= service %>Tools(server: McpServer): void {
+  const metadata = getModelMetadata(modelName);
+
+  // Tool handlers would be registered here
+  // @ts-ignore - Placeholder for future implementation
+  const createTool: Tool = {
+    name: `create_${modelNameLower}`,
+    description: metadata?.description || `Create a new ${modelName} record`,
+    inputSchema: {
+      type: 'object',
+      properties: generateSchemaFromFields(metadata?.fields || []),
+      required: metadata?.fields?.filter((f: any) => f.required).map((f: any) => f.name) || []
+    }
+  };
+
+  // @ts-ignore - Placeholder for future implementation
+  const updateTool: Tool = {
+    name: `update_${modelNameLower}`,
+    description: `Update an existing ${modelName} record`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: `${modelName} record ID` },
+        data: {
+          type: 'object',
+          properties: generateSchemaFromFields(metadata?.fields || [])
+        }
+      },
+      required: ['id', 'data']
+    }
+  };
+
+  // @ts-ignore - Placeholder for future implementation
+  const deleteTool: Tool = {
+    name: `delete_${modelNameLower}`,
+    description: `Delete a ${modelName} record (moves to trash)`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: `${modelName} record ID` }
+      },
+      required: ['id']
+    }
+  };
+}
+
+/**
+ * Generate JSON schema properties from model fields
+ */
+function generateSchemaFromFields(fields: any[]): Record<string, any> {
+  const properties: Record<string, any> = {};
+
+  fields.forEach((field) => {
+    properties[field.name] = {
+      type: mapTypeToJSONSchema(field.type),
+      description: field.mcpDescription || field.description
+    };
+
+    if (field.enum) {
+      properties[field.name].enum = field.enum;
+    }
+  });
+
+  return properties;
+}
+
+/**
+ * Map field type to JSON schema type
+ */
+function mapTypeToJSONSchema(type: string): string {
+  const typeMap: Record<string, string> = {
+    'String': 'string',
+    'Number': 'number',
+    'Boolean': 'boolean',
+    'Date': 'string',
+    'ObjectId': 'string',
+    'Mixed': 'object',
+    'Array': 'array'
+  };
+
+  return typeMap[type] || 'string';
+}
+
+/**
+ * MCP service registration function
+ */
+export default async function register<%= service %>MCP(server: McpServer): Promise<void> {
+  register<%= service %>Resources(server);
+  register<%= service %>Tools(server);
+}

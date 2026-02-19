@@ -1,91 +1,127 @@
-"use strict";
+import db from '../services/database/index.js';
+import { DataTypes, Model, ModelStatic, Op } from 'sequelize';
+import queue from '../services/queue/index.js';
 
-var db = require('../services/database').sql;
-var queue = require('../services/queue');
-
-var table = '<%= service %>s';
-var debug = require('debug')(table);
+const table = '<%= service %>s';
 
 // Define schema
-var schemaObject = {
+const schemaObject: Record<string, any> = {
     // ++++++++++++++ Modify to your own schema ++++++++++++++++++
     name: {
-        type: db._sequelize.STRING
+        type: DataTypes.STRING,
+        description: 'Name field description',
+        mcpDescription: 'Detailed description for LLM context about what this name field represents and how it\'s used'
     },
     someOtherStringData: {
-        type: db._sequelize.STRING
+        type: DataTypes.STRING,
+        description: 'Some other string data description',
+        mcpDescription: 'Detailed description for LLM context about this field'
     },
     toPop: {
-        type: db._sequelize.INTEGER
+        type: DataTypes.INTEGER,
+        description: 'Reference to another <%= service %>',
+        mcpDescription: 'Reference to another <%= service %> record ID. Used for relationships between records.'
     }
     // ++++++++++++++ Modify to your own schema ++++++++++++++++++
 };
 
-
 schemaObject.owner = {
-    type: db._sequelize.STRING
+    type: DataTypes.STRING,
+    description: 'Owner account ID',
+    mcpDescription: 'Identifier for the account that owns this record'
 };
 
 schemaObject.createdBy = {
-    type: db._sequelize.STRING
+    type: DataTypes.STRING,
+    description: 'Creator account ID',
+    mcpDescription: 'Identifier for the account that created this record'
 };
 
 schemaObject.client = {
-    type: db._sequelize.STRING
+    type: DataTypes.STRING,
+    description: 'Client ID',
+    mcpDescription: 'Identifier for the client application associated with this record'
 };
 
 schemaObject.developer = {
-    type: db._sequelize.STRING
+    type: DataTypes.STRING,
+    description: 'Developer user ID',
+    mcpDescription: 'Identifier for the developer user associated with this record'
 };
 
 schemaObject.tags = {
-    type: db._sequelize.STRING
+    type: DataTypes.STRING,
+    description: 'Search tags',
+    mcpDescription: 'Comma-separated searchable tags extracted from record data for full-text search. Used for searching and filtering records.'
 };
 
 schemaObject._id = {
-    type: db._sequelize.INTEGER,
+    type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true
+    autoIncrement: true,
+    description: 'Primary key',
+    mcpDescription: 'Unique identifier for the record. Automatically incremented on creation.'
 };
 
-
 // Define the table
-var <%= service %>s = db.define(table, schemaObject, {
+interface <%= service %>Attributes {
+    _id?: number;
+    name?: string;
+    someOtherStringData?: string;
+    toPop?: number;
+    owner?: string;
+    createdBy?: string;
+    client?: string;
+    developer?: string;
+    tags?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+interface <%= service %>Instance extends Model<<%= service %>Attributes>, <%= service %>Attributes {
+    search(string: string): Promise<any>;
+}
+
+const <%= service %>s = db.sql.define(table, schemaObject, {
     // Don't really delete data
     // paranoid: true,
     // define indexes here
-    indexes:[{
-        fields:['tags']
+    indexes: [{
+        fields: ['tags']
     },
     {
         unique: true,
-        fields:['_id']
-    }]
-});
+        fields: ['_id']
+    }],
+    timestamps: true
+}) as ModelStatic<<%= service %>Instance> & {
+    search: (string: string) => Promise<any>;
+    associate: (_models: any) => void;
+  };
 
-<%= service %>s.associate = function (models) {
+<%= service %>s.associate = function (_models: any): void {
     // models.<%= service %>s.belongsTo(models.toPop, { foreignKey: 'toPop', sourceKey: '_id' });
 };
 
 // <%= service %>s.hasMany(<%= service %>s, {foreignKey: 'toPop', sourceKey: '_id'});
 
 // Adding hooks
-<%= service %>s.afterCreate(function(user, options) {
+<%= service %>s.afterCreate(function(user: <%= service %>Instance, _options: any): void {
     // Indexing for search
-    var ourDoc = user.dataValues;
-    ourDoc.isSQL = true;
-    ourDoc.model = table;
+    const ourDoc = user.dataValues;
+    (ourDoc as any).isSQL = true;
+    (ourDoc as any).model = table;
 
     // Dump it in the queue
     queue.create('searchIndex', ourDoc)
     .save();
 });
 
-<%= service %>s.search = function(string){
+<%= service %>s.search = function(string: string): Promise<any> {
     return <%= service %>s.findAll({
         where: {
             tags: {
-                $like: '%'+string
+                [Op.like]: '%' + string + '%'
             }
         }
     });
@@ -93,7 +129,7 @@ var <%= service %>s = db.define(table, schemaObject, {
 
 <%= service %>s.sync();
 
-<%= service %>s.transaction = db.transaction;
+(<%= service %>s as any).transaction = db.sql.transaction;
 
-module.exports = <%= service %>s;
+export default <%= service %>s;
 // ToDo: Test transactions

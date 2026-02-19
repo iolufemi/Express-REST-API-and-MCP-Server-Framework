@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: snipe
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    env:
+      MONGOLAB_URL: mongodb://127.0.0.1/snipe
+      LOG_MONGOLAB_URL: mongodb://127.0.0.1/snipelogs
+      REDIS_URL: redis://127.0.0.1/1
+      SECURE_MODE: true
+      NO_CACHE: no
+      SQL_HOST: 127.0.0.1
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build TypeScript
+        run: npm run build
+      
+      - name: Generate test services
+        run: |
+          npm run gulp -- service -n api
+          npm run gulp -- service -n test -b http://localhost:8080 -e apis
+          npm run gulp -- service --sql -n apisql
+      
+      - name: Type check
+        run: npm run type-check
+      
+      - name: Run tests with coverage
+        run: npm run test:coverage
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella

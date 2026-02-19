@@ -1,433 +1,459 @@
-"use strict";
+import models from '../models/index.js';
+import queue from '../services/queue/index.js';
+import debug from 'debug';
+import { ExpressRequest, ExpressResponse, ExpressNext } from '../types/express.js';
+import { Op } from 'sequelize';
+import _ from 'lodash';
+import { extractSequelizeModelMetadata } from '../mcp/utils/schema-metadata.js';
 
-var <%= service %>s = require('../models').<%= service %>s;
-var Trash = require('../models').Trash;
-var q = require('q');
-var queue = require('../services/queue');
-var debug = require('debug')('<%= object %>sController');
-var _ = require('lodash');
+const debugLog = debug('<%= object %>sController');
+const service = '<%= service %>s';
+const Model = models.<%= service %>s;
+const Trash = models.Trash;
 
-var service = '<%= service %>s';
+type <%= service %>sRouteHandler = (req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => Promise<void>;
 
-var <%= service %>sController = {};
+export interface <%= service %>sControllerType {
+  buildProjection(projections: string): string[];
+  find: <%= service %>sRouteHandler;
+  getSchema: <%= service %>sRouteHandler;
+  findOne: <%= service %>sRouteHandler;
+  create: <%= service %>sRouteHandler;
+  update: <%= service %>sRouteHandler;
+  updateOne: <%= service %>sRouteHandler;
+  delete: <%= service %>sRouteHandler;
+  deleteOne: <%= service %>sRouteHandler;
+  restore: <%= service %>sRouteHandler;
+}
 
-<%= service %>sController.buildProjection = function(projections){
-    debug('starting build...');
-    var projection = projections.split(','); // Projection should be comma separated. eg. name,location
-    return q.Promise(function(resolve,reject,notify){
-        debug('This is a promise...');
-        var num = projection.length;
-        var last = num - 1;
-        var select = {};
-        for(var n in projection){
-            if(typeof projection[n] === 'string'){
-                debug('Processing...', projection[n]);
-                notify('Adding '+projection[n]+' to projection');
-                select[projection[n]] = 1;
-                if(n * 1 === last){
-                    debug('Coming out of the loop...', select);
-                    notify('Ending Build.');
-                    return resolve(select);
-                }
-            }else{
-                debug('Skiping...', projection[n]);
-                if(n * 1 === last){
-                    debug('Coming out of the loop......', select);
-                    notify('Ending Build..');
-                    return resolve(select);
-                }
-            }
-        }
-    });
-};
+const <%= service %>sController: <%= service %>sControllerType = {
+  buildProjection(projections: string): string[] {
+    debugLog('starting build...');
+    const projection = projections.split(','); // Projection should be comma separated. eg. name,location
+    return projection.filter((field) => typeof field === 'string' && field.trim()).map(f => f.trim());
+  },
 
-<%= service %>sController.find = function(req,res,next){
-    var query;
-    
-    if(req.query.search){
-        query = req.query.search;
+  /**
+   * Find multiple <%= service %> records with filtering, pagination, and search
+   * @mcp.expose true
+   * @mcp.toolName find<%= service %>s
+   * @mcp.description Find and list <%= service %> records with optional filtering, pagination, sorting, and full-text search
+   */
+  find: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      let query: any = {};
+      
+      if (req.query.search) {
+        query = typeof req.query.search === 'string' ? JSON.parse(req.query.search) : req.query.search;
         // Clean appId and userId
-        if(query && query.appId){
-            delete query.appId;
+        if (query && query.appId) {
+          delete query.appId;
         }
-        if(query && query.accountId){
-            delete query.accountId;
+        if (query && query.accountId) {
+          delete query.accountId;
         }
         
-        <%= service %>s.search(query)
-        .then(function(resp){
-            res.ok(JSON.parse(JSON.stringify(resp)));
-        })
-        .catch(function(err){
-            next(err);
-        });
-    }else{
-        query = req.query;
+        const resp = await (Model as any).search(query);
+        res.ok?.(JSON.parse(JSON.stringify(resp)));
+      } else {
+        query = { ...req.query };
         // Clean appId and userId
-        if(query && query.appId){
-            delete query.appId;
+        if (query && query.appId) {
+          delete query.appId;
         }
-        if(query && query.accountId){
-            delete query.accountId;
+        if (query && query.accountId) {
+          delete query.accountId;
         }
-        var _query = {};
-        var projection = query.select; // Projection should be comma separated. eg. name,location
-        var ourProjection;
         
-        if(projection){
-            ourProjection = <%= service %>sController.buildProjection(projection);
-            delete query.select;
+        const _query: any = {};
+        const projection = query.select; // Projection should be comma separated. eg. name,location
+        let ourProjection: string[] | undefined;
+        
+        if (projection) {
+          ourProjection = <%= service %>sController.buildProjection(projection);
+          delete query.select;
         }
-        var limit = query.limit * 1;
-        if(limit){
-            delete query.limit;
+        
+        let limit = query.limit ? parseInt(query.limit as string, 10) : undefined;
+        if (limit) {
+          delete query.limit;
         }
 
-        var from = query.from;
-        var to = query.to;
-        if(from){
-            query.createdAt = {};
-            query.createdAt.$gte = from;
-            delete query.from;
-            if(to){
-                delete query.to;
-            }else{
-                to = new Date().toISOString();
-            }
-            query.createdAt.$lte = to;
-        }else{
-            query.createdAt = {};
-            query.createdAt.$gte = new Date('1989-03-15T00:00:00').toISOString();
-            if(to){
-                delete query.to;
-            }else{
-                to = new Date().toISOString();
-            }
-            query.createdAt.$lte = to;
+        const from = query.from;
+        const to = query.to;
+        if (from) {
+          query.createdAt = {};
+          query.createdAt[Op.gte] = from;
+          delete query.from;
+          if (to) {
+            delete query.to;
+          } else {
+            query.createdAt[Op.lte] = new Date().toISOString();
+          }
+          query.createdAt[Op.lte] = to || new Date().toISOString();
+        } else {
+          query.createdAt = {};
+          query.createdAt[Op.gte] = new Date('1989-03-15T00:00:00').toISOString();
+          if (to) {
+            delete query.to;
+          }
+          query.createdAt[Op.lte] = to || new Date().toISOString();
         }
-        var lastId = query.lastId * 1;
-        if(lastId){
-            if(query.desc){
-                query._id = {};
-                query._id.$lt = lastId;
-                delete query.desc;
-            }else{
-                query._id = {};
-                query._id.$gt = lastId;
-            }
-            delete query.lastId;
-        }
-        if(query.desc){
+        
+        const lastId = query.lastId ? parseInt(query.lastId as string, 10) : undefined;
+        if (lastId) {
+          if (query.desc) {
+            query._id = {};
+            query._id[Op.lt] = lastId;
             delete query.desc;
+          } else {
+            query._id = {};
+            query._id[Op.gt] = lastId;
+          }
+          delete query.lastId;
         }
-        var sort = query.sort; // -fieldName: means descending while fieldName without the minus mean ascending bith by fieldName. eg, '-fieldName1 fieldName2'
-        if(sort){
-            delete query.sort;
+        if (query.desc) {
+          delete query.desc;
         }
-        var populate = query.populate; // Samples: 'name location' will populate name and location references. only supports this for now | 'name', 'firstname' will populate name reference and only pick the firstname attribute
-        if(populate){
-            delete query.populate;
+        
+        const sort = query.sort; // -fieldName: means descending while fieldName without the minus mean ascending both by fieldName. eg, '-fieldName1 fieldName2'
+        if (sort) {
+          delete query.sort;
         }
-        var totalResultQ;
-        var totalQ;
-        var questionQ;
+        
+        const populate = query.populate; // Samples: 'name location' will populate name and location references. only supports this for now | 'name', 'firstname' will populate name reference and only pick the firstname attribute
+        if (populate) {
+          delete query.populate;
+        }
 
-        if(limit){
-            _query.limit = limit;
-        }else{
-            limit = 50;
-            _query.limit = limit;
+        if (limit) {
+          _query.limit = limit;
+        } else {
+          limit = 50;
+          _query.limit = limit;
         }
+        
         _query.where = query;
-        var totalResult = <%= service %>s.count(_query);
-        var total = <%= service %>s.count({});
+        const totalResult = (Model as any).count({ where: query });
+        const total = (Model as any).count({});
 
-        if(sort){
-            _query.order = [];
-            var splitSort = sort.split(' ');
-            for(var n in splitSort){
-                if(typeof splitSort[n] === 'string'){
-                    if(splitSort[n][0] === '-'){
-                        _query.order.push([splitSort[n].substr('1'), 'DESC']);
-                    }else{
-                        _query.order.push([splitSort[n], 'ASC']);
-                    }
-                }
+        if (sort) {
+          _query.order = [];
+          const splitSort = sort.split(' ');
+          for (const sortField of splitSort) {
+            if (typeof sortField === 'string' && sortField.trim()) {
+              if (sortField[0] === '-') {
+                _query.order.push([sortField.substr(1), 'DESC']);
+              } else {
+                _query.order.push([sortField, 'ASC']);
+              }
             }
+          }
         }
 
         if (populate) {
-            _query.include = [];
-            var splitPopulation = populate.split(' ');
-            for (var m in splitPopulation) {
-                if (typeof splitPopulation[m] === 'string') {
-                    if (models[splitPopulation[m]]) {
-                        _query.include.push({ model: models[splitPopulation[m]] });
-                    }
-                }
+          _query.include = [];
+          const splitPopulation = populate.split(' ');
+          for (const popField of splitPopulation) {
+            if (typeof popField === 'string' && popField.trim() && (models as any)[popField.trim()]) {
+              _query.include.push({ model: (models as any)[popField.trim()] });
             }
+          }
         }
 
-        if(projection){
-            q.all([ourProjection,total,totalResult])
-            .spread(function(resp,total,totalResult){
-                resp._id = 1;
-                _query.attributes = _.keys(resp);
-                return [<%= service %>s.findAll(_query),total,totalResult];
-            })
-            .spread(function(resp,total,totalResult){
-                var ourLastId;
-                if(resp.length === 0){
-                    ourLastId = null;
-                }else{
-                    ourLastId = resp[resp.length - 1]._id;
-                }
-                
-                var extraData = {};
-                extraData.limit = limit * 1;
-                extraData.total = total;
-                extraData.totalResult = totalResult;
-                extraData.lastId = ourLastId;
-                extraData.isLastPage = (totalResult < limit) ? true : false;
-                res.ok(JSON.parse(JSON.stringify(resp)), false, extraData);
-            })
-            .catch(function(err){
-                next(err);
-            });
-        }else{
-            q.all([<%= service %>s.findAll(_query),total,totalResult])
-            .spread(function(resp,total,totalResult){
-                var ourLastId;
-                if(resp.length === 0){
-                    ourLastId = null;
-                }else{
-                    ourLastId = resp[resp.length - 1]._id;
-                }
-
-                
-                var extraData = {};
-                extraData.limit = limit * 1;
-                extraData.total = total;
-                extraData.lastId = ourLastId;
-                extraData.totalResult = totalResult;
-                extraData.isLastPage = (totalResult < limit) ? true : false;
-                res.ok(JSON.parse(JSON.stringify(resp)), false, extraData);
-            })
-            .catch(function(err){
-                next(err);
-            });
+        if (projection && ourProjection) {
+          ourProjection.push('_id');
+          _query.attributes = ourProjection;
+          const [resp, totalCount, totalResultCount] = await Promise.all([
+            (Model as any).findAll(_query),
+            total,
+            totalResult
+          ]);
+          
+          const ourLastId = resp.length === 0 ? null : resp[resp.length - 1]._id;
+          const extraData = {
+            limit: limit * 1,
+            total: totalCount,
+            totalResult: totalResultCount,
+            lastId: ourLastId,
+            isLastPage: (totalResultCount < limit)
+          };
+          res.ok?.(JSON.parse(JSON.stringify(resp)), false, extraData);
+        } else {
+          const [resp, totalCount, totalResultCount] = await Promise.all([
+            (Model as any).findAll(_query),
+            total,
+            totalResult
+          ]);
+          
+          const ourLastId = resp.length === 0 ? null : resp[resp.length - 1]._id;
+          const extraData = {
+            limit: limit * 1,
+            total: totalCount,
+            lastId: ourLastId,
+            totalResult: totalResultCount,
+            isLastPage: (totalResultCount < limit)
+          };
+          res.ok?.(JSON.parse(JSON.stringify(resp)), false, extraData);
         }
-
+      }
+    } catch (err: any) {
+      next(err);
     }
-};
+  },
 
-<%= service %>sController.findOne = function(req,res,next){  
-    var _query = {};
-    var id = req.params.id;
-    var query = req.query;
-    var populate;
-    if(query){
-        populate = query.populate; // Samples: 'name location' will populate name and location references. only supports this for now | 'name', 'firstname' will populate name reference and only pick the firstname attribute
-    }
-    _query.where = <%= service %>s.where = {_id:id};
+  /**
+   * Find a single <%= service %> record by ID
+   * @mcp.expose true
+   * @mcp.toolName get<%= service %>ById
+   * @mcp.description Retrieve a single <%= service %> record by its unique identifier
+   */
+  findOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const _query: any = {};
+      const id = req.params.id;
+      const query: any = req.query || {};
+      const populate = query.populate; // Samples: 'name location' will populate name and location references. only supports this for now | 'name', 'firstname' will populate name reference and only pick the firstname attribute
+      
+      _query.where = { _id: id };
 
-    if (populate) {
+      if (populate) {
         delete query.populate;
         _query.include = [];
-        var splitPopulation = populate.split(' ');
-        for (var m in splitPopulation) {
-            if (typeof splitPopulation[m] === 'string') {
-                if (models[splitPopulation[m]]) {
-                    _query.include.push({ model: models[splitPopulation[m]] });
-                }
-            }
+        const splitPopulation = populate.split(' ');
+        for (const popField of splitPopulation) {
+          if (typeof popField === 'string' && popField.trim() && (models as any)[popField.trim()]) {
+            _query.include.push({ model: (models as any)[popField.trim()] });
+          }
         }
+      }
+
+      const resp = await (Model as any).findOne(_query);
+      if (!resp) {
+        res.notFound?.();
+      } else {
+        res.ok?.(resp.toJSON());
+      }
+    } catch (err: any) {
+      next(err);
     }
+  },
 
-    var question = <%= service %>s.findOne(_query);
+  /**
+   * Create a new <%= service %> record
+   * @mcp.expose true
+   * @mcp.toolName create<%= service %>
+   * @mcp.description Create a new <%= service %> record with the provided data
+   */
+  create: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const data: any = Array.isArray(req.body) ? [...req.body] : { ...req.body };
+      if (data && (data as any).secure) {
+        delete (data as any).secure;
+      }
 
-    question
-    .then(function(resp){
-        if(!resp){
-            next();
-        }else{
-            res.ok(resp.toJSON());
-        }
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
-
-<%= service %>sController.create = function(req,res,next){
-    var data  = req.body;
-    if(data && data.secure){
-        delete data.secure;
+      let resp;
+      if (Array.isArray(data)) {
+        resp = await (Model as any).bulkCreate(data);
+      } else {
+        resp = await (Model as any).create(data);
+      }
+      
+      res.ok?.(resp);
+    } catch (err: any) {
+      next(err);
     }
+  },
 
-    var question;
-    if(data.length){
-        question = <%= service %>s.bulkCreate(data);
-    }else{
-        question = <%= service %>s.create(data);
-    }
-
-    question
-    .then(function(resp){
-        res.ok(resp);
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
-
-<%= service %>sController.update = function(req,res,next){
-    var query = req.query;
-    var _query = {};
-    // Clean appId and userId
-    if(query && query.appId){
+  /**
+   * Update multiple <%= service %> records matching the query
+   * @mcp.expose true
+   * @mcp.toolName update<%= service %>s
+   * @mcp.description Update multiple <%= service %> records that match the specified query criteria
+   */
+  update: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const query: any = { ...req.query };
+      const _query: any = {};
+      // Clean appId and userId
+      if (query && query.appId) {
         delete query.appId;
-    }
-    if(query && query.accountId){
+      }
+      if (query && query.accountId) {
         delete query.accountId;
-    }
-    var data  = req.body;
-    if(data && data.secure){
+      }
+      
+      const data: any = { ...req.body };
+      if (data && data.secure) {
         delete data.secure;
+      }
+
+      _query.where = query;
+      const resp = await (Model as any).update(data, _query);
+      res.ok?.(resp);
+    } catch (err: any) {
+      next(err);
     }
+  },
 
-    _query.where = query;
-    <%= service %>s.update(data, _query)
-    .then(function(resp){
-        res.ok(resp);
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
-
-<%= service %>sController.updateOne = function(req,res,next){
-    var _query = {};
-    var id = req.params.id;
-    var data  = req.body;
-    if(data && data.secure){
+  /**
+   * Update a single <%= service %> record by ID
+   * @mcp.expose true
+   * @mcp.toolName update<%= service %>ById
+   * @mcp.description Update a single <%= service %> record by its unique identifier
+   */
+  updateOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const _query: any = {};
+      const id = req.params.id;
+      const data: any = { ...req.body };
+      if (data && data.secure) {
         delete data.secure;
+      }
+      
+      _query.where = { _id: id };
+      const resp = await (Model as any).update(data, _query);
+      if (!resp || resp[0] === 0) {
+        res.notFound?.();
+      } else {
+        const updated = await (Model as any).findOne({ where: { _id: id } });
+        res.ok?.(updated);
+      }
+    } catch (err: any) {
+      next(err);
     }
-    _query.where = <%= service %>s.where = {_id:id};
-    <%= service %>s.update(data,_query)
-    .then(function(resp){
-        if(!resp){
-            next();
-        }else{
-            res.ok(resp);
-        }
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
+  },
 
-<%= service %>sController.delete = function(req,res,next){ 
-    var _query = {};
-    var query = req.query;
-    // Clean appId and userId
-    if(query && query.appId){
+  /**
+   * Delete multiple <%= service %> records matching the query
+   * @mcp.expose true
+   * @mcp.toolName delete<%= service %>s
+   * @mcp.description Delete multiple <%= service %> records that match the specified query criteria. Deleted records are moved to trash for potential restoration.
+   */
+  delete: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const _query: any = {};
+      const query: any = { ...req.query };
+      // Clean appId and userId
+      if (query && query.appId) {
         delete query.appId;
-    }
-    if(query && query.accountId){
+      }
+      if (query && query.accountId) {
         delete query.accountId;
+      }
+
+      _query.where = query;
+
+      // Find matches
+      const resp = await (Model as any).findAll(_query);
+      
+      // Backup data in Trash and delete
+      for (const item of resp) {
+        const backupData = {
+          service: service,
+          data: item.toJSON(),
+          owner: req.accountId,
+          deletedBy: req.accountId,
+          client: req.appId,
+          developer: req.developer
+        };
+        
+        queue.create('saveToTrash', backupData).save();
+        await item.destroy();
+      }
+      
+      res.ok?.(resp.map((r: any) => r.toJSON()));
+    } catch (err: any) {
+      next(err);
     }
+  },
 
-    _query.where = query;
+  /**
+   * Delete a single <%= service %> record by ID
+   * @mcp.expose true
+   * @mcp.toolName delete<%= service %>ById
+   * @mcp.description Delete a single <%= service %> record by its unique identifier. The deleted record is moved to trash for potential restoration.
+   */
+  deleteOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const _query: any = {};
+      const id = req.params.id;
 
-    // Find match
-    <%= service %>s.findAll(_query)
-    .then(function(resp){
-        var num = resp.length;
-        var last = num - 1;
-        for(var n in resp){
-            if(typeof resp === 'object'){
-                // Backup data in Trash
-                var backupData = {};
-                backupData.service = service;
-                backupData.data = resp[n];
-                backupData.owner = req.accountId;
-                backupData.deletedBy = req.accountId;
-                backupData.client = req.appId;
-                backupData.developer = req.developer;
+      _query.where = { _id: id };
+      
+      // Find match
+      const resp = await (Model as any).findOne(_query);
+      if (!resp) {
+        res.notFound?.();
+        return;
+      }
+      
+      // Backup data in Trash
+      const backupData = {
+        service: service,
+        data: resp.toJSON(),
+        owner: req.accountId,
+        deletedBy: req.accountId,
+        client: req.appId,
+        developer: req.developer
+      };
 
-                queue.create('saveToTrash', backupData)
-                .save();
-                resp[n].destroy();
-                if(n * 1 === last){
-                    return resp;
-                }
-            }else{
-                if(n * 1 === last){
-                    return resp;
-                }
-            }
-        }
-    })
-    .then(function(resp){
-        res.ok(resp);
-    })
-    .catch(function(err){
-        next(err);
-    });
+      queue.create('saveToTrash', backupData).save();
+
+      await resp.destroy();
+      res.ok?.(backupData.data);
+    } catch (err: any) {
+      next(err);
+    }
+  },
+
+  /**
+   * Restore a deleted <%= service %> record from trash
+   * @mcp.expose true
+   * @mcp.toolName restore<%= service %>
+   * @mcp.description Restore a previously deleted <%= service %> record from the trash back to the main collection
+   */
+  restore: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const id = req.params.id;
+      
+      // Find data by ID from trash
+      const trashItem = await (Trash as any).findById(id).lean();
+      if (!trashItem) {
+        res.notFound?.();
+        return;
+      }
+      
+      // Restore to DB
+      const resp = await (Model as any).create(trashItem.data);
+      
+      // Delete from trash
+      await (Trash as any).findByIdAndRemove(id);
+      res.ok?.(resp);
+    } catch (err: any) {
+      next(err);
+    }
+  },
+
+  /**
+   * Get schema metadata for this model (SQL)
+   * @mcp.expose true
+   * @mcp.toolName get<%= service %>Schema
+   * @mcp.description Get the schema definition for <%= service %> records (fields, types, descriptions) for use by MCP and API consumers
+   */
+  getSchema: async function (_req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
+    try {
+      const modelName = service;
+      const metadata = extractSequelizeModelMetadata(modelName, Model as import('../types/models.js').SequelizeModelType);
+      if (!metadata) {
+        res.notFound?.();
+        return;
+      }
+      res.ok?.(metadata);
+    } catch (err: any) {
+      next(err);
+    }
+  }
 };
 
-<%= service %>sController.deleteOne = function(req,res,next){
-    var _query = {};
-    var id = req.params.id;
-
-    _query.where = {_id:id};
-    // Find match
-    <%= service %>s.findOne(_query)
-    .then(function(resp){
-        if(!resp){
-            throw {statusCode: 404 , message: 'Could not find data'};
-        }
-        // Backup data in Trash
-        var backupData = {};
-        backupData.service = service;
-        backupData.data = resp;
-        backupData.owner = req.accountId;
-        backupData.deletedBy = req.accountId;
-        backupData.client = req.appId;
-        backupData.developer = req.developer;
-
-        queue.create('saveToTrash', backupData)
-        .save();
-
-        return resp.destroy();
-    })
-    .then(function(resp){
-        res.ok(resp);
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
-
-<%= service %>sController.restore = function(req,res,next){
-    var id = req.params.id;
-    // Find data by ID from trash 
-    Trash.findById(id)
-    .then(function(resp){
-        // Restore to DB
-        return <%= service %>s.create(resp.data);
-    })
-    .then(function(resp){
-        // Delete from trash
-        return [Trash.findByIdAndRemove(id), resp];
-    })
-    .spread(function(trash, resp){
-        res.ok(resp);
-    })
-    .catch(function(err){
-        next(err);
-    });
-};
-
-module.exports = <%= service %>sController;
+export default <%= service %>sController;
