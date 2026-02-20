@@ -332,14 +332,10 @@ async function createRouter(): Promise<Router> {
     // Only load TypeScript route files
     return file.endsWith('.ts') || file.endsWith('.js');
   });
-  
-  // Load routes asynchronously
-  (router as RouterWithLoadRoutes)._loadRoutes(routeFiles).catch((err: Error) => {
-    log.error('Error loading routes:', err);
-  });
-  
-  // Finished loading routes
-  
+
+  // Wait for all dynamic routes to load before attaching 404 handler
+  await (router as RouterWithLoadRoutes)._loadRoutes(routeFiles);
+
   router.use((_req: ExpressRequest, res: ExpressResponse, _next: ExpressNext) => {
     res.notFound?.();
   });

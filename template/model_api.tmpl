@@ -39,14 +39,19 @@ schemaObject.updatedAt = {
     mcpDescription: 'Date and time when the record was last updated. May be provided by the external API.'
 };
 
+// Optional: override baseurl at runtime via env (e.g. in tests: set before app loads)
+// For tests that start a local server, use model.setBaseUrl('http://localhost:PORT') in before() instead.
+const _baseurl = process.env['<%= service.toUpperCase().replace(/\s+/g, '_') %>_API_BASEURL'] || '<%= baseurl %>';
+const _endpoint = '<%= endpoint %>';
+
 // Attach schema to the model for MCP metadata extraction
-const Model = new ApiModel('<%= baseurl %>', '<%= endpoint %>'/*, {
+const Model = new ApiModel(_baseurl, _endpoint/*, {
     authorization: '72624642hfbsbsyrwywr'
 }*/);
 
 // Expose base URL and endpoint for schema discovery (GET {baseurl}/{endpoint}/schema)
-(Model as any)._baseurl = '<%= baseurl %>';
-(Model as any)._endpoint = '<%= endpoint %>';
+(Model as any)._baseurl = _baseurl;
+(Model as any)._endpoint = _endpoint;
 
 // Attach schema definition to the model instance for MCP (fallback when discovery fails)
 (Model as any)._schema = {

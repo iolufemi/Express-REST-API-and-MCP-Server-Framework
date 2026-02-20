@@ -10,21 +10,30 @@ chai.use(sinonChai);
 import _ from 'lodash';
 
 import response from '../../src/services/response/index.js';
-import express from 'express';
-import bodyParser from 'body-parser';
 import routerPromise from '../../src/routes/index.js';
-
-const app = express();
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(response);
+import modelsPromise from '../../src/models/index.js';
+import { createTestServer } from '../helpers.js';
 
 let agent: ReturnType<typeof request.agent>;
+let testServer: Awaited<ReturnType<typeof createTestServer>> | null = null;
+
 before(async function () {
-  this.timeout(10000);
-  const router = await routerPromise;
-  app.use(router);
-  agent = request.agent(app);
+  this.timeout(15000);
+  testServer = await createTestServer();
+  const db = await modelsPromise;
+  const Model = db.<%= service %>s;
+  if (Model && typeof Model.setBaseUrl === 'function') {
+    Model.setBaseUrl('http://localhost:' + testServer!.port);
+  }
+  agent = request.agent(testServer!.app);
+});
+
+after(function (done) {
+  if (testServer && testServer.server) {
+    testServer.server.close(done);
+  } else {
+    done();
+  }
 });
 
 const res = {};
@@ -67,7 +76,7 @@ let last;
 let oneId;
 let oneId2;
 const from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
-describe('/<%= object %>s', function(){
+describe('/<%= object %>s (API → local /<%= endpoint %>)', function(){
 
     before(function(done){
         import('../../src/services/queue/workers.js').then(() => {

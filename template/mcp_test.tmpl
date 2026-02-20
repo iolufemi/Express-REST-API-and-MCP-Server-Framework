@@ -1,33 +1,250 @@
 /**
  * MCP Tests for <%= service %>
- * 
- * Auto-generated test file for <%= service %> MCP integration
+ *
+ * Verifies that the MCP server and generated <%= service %> endpoint are correctly
+ * integrated: registration, unified server, model metadata, HTTP config/info routes,
+ * and the MCP protocol over in-memory transport (listTools / listResources).
  */
 
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+chai.use(chaiAsPromised);
+const { expect } = chai;
+
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import register<%= service %>Service from '../../src/mcp/services/<%= registrationBasename %>.registration.js';
+import { createUnifiedMCPServer } from '../../src/mcp/servers/unified.js';
+import { getModelMetadata, getAllModelMetadata } from '../../src/mcp/utils/model-metadata.js';
+import { createTestServer } from '../helpers.js';
+import request from 'supertest';
 
-describe('<%= service %> MCP Integration', () => {
-  let server: McpServer;
+describe('<%= service %> MCP Integration', function () {
 
-  beforeEach(() => {
-    server = new McpServer(
-      {
-        name: 'test-<%= registrationBasename %>-mcp',
-        version: '1.0.0'
-      },
-      {
-        capabilities: {
-          resources: {},
-          tools: {}
+  this.timeout(15000);
+
+  describe('Service registration', function () {
+    let server: McpServer;
+
+    beforeEach(function () {
+      server = new McpServer(
+        {
+          name: 'test-<%= registrationBasename %>-mcp',
+          version: '1.0.0'
+        },
+        {
+          capabilities: {
+            resources: {},
+            tools: {}
+          }
         }
+      );
+    });
+
+    it('should load and register <%= service %> MCP service without error', async function () {
+      await expect(register<%= service %>Service(server)).to.not.be.rejected;
+    });
+  });
+
+  describe('Unified MCP server', function () {
+    it('should create unified MCP server instance', async function () {
+      const instance = await createUnifiedMCPServer({
+        name: 'test-unified-mcp',
+        version: '1.0.0',
+        transports: []
+      });
+      expect(instance).to.have.property('server');
+      expect(instance).to.have.property('start').that.is.a('function');
+      expect(instance).to.have.property('stop').that.is.a('function');
+    });
+
+    it('should start and stop unified MCP server when no transports', async function () {
+      const instance = await createUnifiedMCPServer({
+        name: 'test-unified-mcp',
+        version: '1.0.0',
+        transports: []
+      });
+      await expect(instance.start()).to.not.be.rejected;
+      await expect(instance.stop()).to.not.be.rejected;
+    });
+  });
+
+  describe('MCP protocol (in-memory transport)', function () {
+    it('should connect client to server over InMemoryTransport and list tools', async function () {
+      const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+      const instance = await createUnifiedMCPServer({
+        name: 'test-protocol-mcp',
+        version: '1.0.0',
+        transports: []
+      });
+      const mcpServer = instance.server as McpServer;
+      await mcpServer.connect(serverTransport);
+      await serverTransport.start();
+
+      const client = new Client({ name: 'test-mcp-client', version: '1.0.0' });
+      await client.connect(clientTransport);
+
+      try {
+        const toolsResult = await client.listTools();
+        expect(toolsResult).to.have.property('tools').that.is.an('array');
+        const toolNames = (toolsResult.tools || []).map((t: { name?: string }) => t.name).filter(Boolean);
+        if (toolNames.length > 0) {
+          const forModel = toolNames.filter((name: string) =>
+            name && (name.includes('<%= nameCapitalisePlural %>') || name.includes('<%= namePlural %>'))
+          );
+          expect(forModel.length).to.be.greaterThan(0, 'Expected at least one tool for <%= nameCapitalisePlural %> when server registers tools');
+        }
+      } catch (err: unknown) {
+        expect(String((err as Error).message)).to.include('Method not found', 'Server may not register tools yet; protocol exchange still verified');
       }
-    );
+      await clientTransport.close();
+    });
+
+    it('should list resources over InMemoryTransport', async function () {
+      const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+      const instance = await createUnifiedMCPServer({
+        name: 'test-protocol-mcp',
+        version: '1.0.0',
+        transports: []
+      });
+      const mcpServer = instance.server as McpServer;
+      await mcpServer.connect(serverTransport);
+      await serverTransport.start();
+
+      const client = new Client({ name: 'test-mcp-client', version: '1.0.0' });
+      await client.connect(clientTransport);
+
+      try {
+        const resourcesResult = await client.listResources();
+        expect(resourcesResult).to.have.property('resources').that.is.an('array');
+        const uris = (resourcesResult.resources || []).map((r: { uri?: string }) => r.uri).filter(Boolean);
+        if (uris.length > 0) {
+          const forModel = uris.filter((u: string) => u && u.includes('<%= namePlural %>'));
+          expect(forModel).to.include('<%= namePlural %>://list');
+          expect(forModel).to.include('<%= namePlural %>://{id}');
+          expect(forModel).to.include('<%= namePlural %>://search');
+        }
+      } catch (err: unknown) {
+        expect(String((err as Error).message)).to.include('Method not found', 'Server may not register resources yet; protocol exchange still verified');
+      }
+      await clientTransport.close();
+    });
   });
 
-  it('should register <%= service %> MCP service', async () => {
-    await register<%= service %>Service(server);
+  describe('Model metadata for <%= service %>', function () {
+    it('should include <%= nameCapitalisePlural %> in model metadata when models are loaded', async function () {
+      const metadata = await getModelMetadata('<%= nameCapitalisePlural %>');
+      expect(metadata).to.not.be.null;
+      expect(metadata).to.have.property('name', '<%= nameCapitalisePlural %>');
+      expect(metadata).to.have.property('fields').that.is.an('array');
+    });
+
+    it('should list <%= nameCapitalisePlural %> in getAllModelMetadata', async function () {
+      const all = await getAllModelMetadata();
+      const found = all.find(m => m.name === '<%= nameCapitalisePlural %>');
+      expect(found).to.exist;
+      expect(found).to.have.property('name', '<%= nameCapitalisePlural %>');
+    });
   });
 
-  // Add more tests for resources and tools
+  describe('MCP HTTP routes (config and info)', function () {
+    let testServer: Awaited<ReturnType<typeof createTestServer>> | null = null;
+
+    before(async function () {
+      testServer = await createTestServer();
+    });
+
+    after(function (done) {
+      if (testServer && testServer.server) {
+        testServer.server.close(done);
+      } else {
+        done();
+      }
+    });
+
+    it('GET /mcp/config should return 200 and config containing <%= service %> resources', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/config')
+        .expect(200);
+      expect(res.body).to.be.an('object');
+      const raw = res.body.resources || res.body.capabilities?.resources?.list || [];
+      const uris = Array.isArray(raw)
+        ? raw.map((r: string | { uri?: string }) => typeof r === 'string' ? r : (r && (r as { uri?: string }).uri))
+        : [];
+      expect(uris.some((u: string | undefined) => u && u.includes('<%= namePlural %>'))).to.be.true;
+      expect(res.body.server || res.body.name).to.exist;
+    });
+
+    it('GET /mcp/info should return 200 and info listing <%= nameCapitalisePlural %> model', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/info')
+        .expect(200);
+      expect(res.body).to.have.property('resources');
+      expect(res.body.resources).to.have.property('models').that.is.an('array');
+      const modelEntry = res.body.resources.models.find((m: { name?: string }) => m.name === '<%= nameCapitalisePlural %>');
+      expect(modelEntry).to.exist;
+      expect(modelEntry).to.have.property('uris').that.is.an('array');
+      expect(modelEntry.uris.some((u: string) => u && u.includes('<%= namePlural %>'))).to.be.true;
+    });
+
+    it('GET /mcp/config should include tools or capabilities', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/config')
+        .expect(200);
+      const hasTools = res.body.tools != null || res.body.capabilities?.tools != null;
+      expect(hasTools || res.body.resources?.length >= 0).to.be.true;
+    });
+
+    it('GET /mcp/config should list all three resource URIs for <%= nameCapitalisePlural %>', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/config')
+        .expect(200);
+      const raw = res.body.resources ?? res.body.capabilities?.resources?.list ?? [];
+      const uris = Array.isArray(raw)
+        ? raw.map((r: string | { uri?: string }) => (typeof r === 'string' ? r : (r && (r as { uri?: string }).uri)) ?? '')
+        : [];
+      const expectedList = '<%= namePlural %>://list';
+      const expectedId = '<%= namePlural %>://{id}';
+      const expectedSearch = '<%= namePlural %>://search';
+      expect(uris).to.include(expectedList);
+      expect(uris).to.include(expectedId);
+      expect(uris).to.include(expectedSearch);
+    });
+
+    it('GET /mcp/info should list all three resource URIs for <%= nameCapitalisePlural %>', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/info')
+        .expect(200);
+      const modelEntry = res.body.resources?.models?.find((m: { name?: string }) => m.name === '<%= nameCapitalisePlural %>');
+      expect(modelEntry).to.exist;
+      expect(modelEntry.uris).to.include('<%= namePlural %>://list');
+      expect(modelEntry.uris).to.include('<%= namePlural %>://{id}');
+      expect(modelEntry.uris).to.include('<%= namePlural %>://search');
+    });
+
+    it('GET /mcp/config should list tools for <%= nameCapitalisePlural %> controller when discovery works', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/config')
+        .expect(200);
+      const toolList = res.body.capabilities?.tools?.list ?? res.body.tools?.map((t: { name?: string }) => t.name) ?? [];
+      expect(toolList).to.be.an('array');
+      const controllerTools = toolList.filter((name: string) =>
+        name && (name === '<%= nameCapitalisePlural %>' || name.startsWith('<%= nameCapitalisePlural %>_') || name.includes('<%= nameCapitalisePlural %>'))
+      );
+      expect(controllerTools.length).to.be.greaterThan(0, 'Expected at least one tool for <%= nameCapitalisePlural %> controller (e.g. <%= nameCapitalisePlural %>_find, <%= nameCapitalisePlural %>_create)');
+    });
+
+    it('GET /mcp/info should list tools for <%= nameCapitalisePlural %> in tools.list', async function () {
+      const res = await request(testServer!.app)
+        .get('/mcp/info')
+        .expect(200);
+      expect(res.body).to.have.property('tools');
+      expect(res.body.tools).to.have.property('list').that.is.an('array');
+      const forController = (res.body.tools.list as Array<{ name?: string; controller?: string }>).filter(
+        (t) => t.controller === '<%= nameCapitalisePlural %>' || (t.name && (t.name.startsWith('<%= nameCapitalisePlural %>') || t.name.includes('<%= nameCapitalisePlural %>')))
+      );
+      expect(forController.length).to.be.greaterThan(0, 'Expected at least one tool for <%= nameCapitalisePlural %> in /mcp/info tools.list');
+    });
+  });
 });

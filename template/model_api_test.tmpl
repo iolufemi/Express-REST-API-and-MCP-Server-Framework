@@ -8,13 +8,33 @@ import q from 'q';
 
 import <%= service %> from '../../src/models/<%= service %>s.js';
 import '../../src/services/queue/workers.js';
+import modelsPromise from '../../src/models/index.js';
+import { createTestServer } from '../helpers.js';
 
-describe('<%= service %> Model',function(){
+let testServer: Awaited<ReturnType<typeof createTestServer>> | null = null;
+
+describe('<%= service %> Model (API → local /<%= endpoint %>)',function(){
+
+    this.timeout(20000);
 
     let id;
     let id2;
 
-    before(function(){  /* jslint ignore:line */
+    before(async function(){  /* jslint ignore:line */
+        testServer = await createTestServer();
+        const models = await modelsPromise;
+        const model = models['<%= service %>'];
+        if (model && typeof model.setBaseUrl === 'function') {
+            model.setBaseUrl('http://localhost:' + testServer.port);
+        }
+    });
+
+    after(function(done){  /* jslint ignore:line */
+        if (testServer && testServer.server) {
+            testServer.server.close(done);
+        } else {
+            done();
+        }
     });
 
     describe('Test CRUDS', function(){

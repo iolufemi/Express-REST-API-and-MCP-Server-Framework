@@ -3,6 +3,39 @@
  */
 
 import { expect } from 'chai';
+import express from 'express';
+import bodyParser from 'body-parser';
+import type { Server } from 'http';
+
+/**
+ * Create an Express app with the same router as the main app and listen on an ephemeral port.
+ * Use this for API-model tests that need to point the model at a real local server (e.g. /products, /orders).
+ * Remember to call server.close() in after().
+ */
+export async function createTestServer(): Promise<{ app: express.Express; server: Server; port: number }> {
+  const response = (await import('../src/services/response/index.js')).default;
+  const routerPromise = (await import('../src/routes/index.js')).default;
+  const router = await (routerPromise as Promise<express.Router>);
+
+  const app = express();
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.json());
+  app.use(response);
+  app.use(router);
+
+  return new Promise((resolve, reject) => {
+    const server = app.listen(0, () => {
+      const address = server.address();
+      if (address && typeof address !== 'string') {
+        resolve({ app, server, port: address.port });
+      } else {
+        server.close();
+        reject(new Error('Could not get server port'));
+      }
+    });
+    server.on('error', reject);
+  });
+}
 import type { NextFunction } from 'express';
 
 /**

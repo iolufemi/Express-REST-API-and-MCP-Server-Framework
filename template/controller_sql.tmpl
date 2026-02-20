@@ -1,4 +1,4 @@
-import models from '../models/index.js';
+import modelsPromise from '../models/index.js';
 import queue from '../services/queue/index.js';
 import debug from 'debug';
 import { ExpressRequest, ExpressResponse, ExpressNext } from '../types/express.js';
@@ -8,8 +8,11 @@ import { extractSequelizeModelMetadata } from '../mcp/utils/schema-metadata.js';
 
 const debugLog = debug('<%= object %>sController');
 const service = '<%= service %>s';
-const Model = models.<%= service %>s;
-const Trash = models.Trash;
+
+async function getModels(): Promise<{ Model: any; Trash: any; models: any }> {
+  const m = await modelsPromise;
+  return { Model: m.<%= service %>s, Trash: m.Trash, models: m };
+}
 
 type <%= service %>sRouteHandler = (req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => Promise<void>;
 
@@ -41,10 +44,23 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   find: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       let query: any = {};
       
       if (req.query.search) {
-        query = typeof req.query.search === 'string' ? JSON.parse(req.query.search) : req.query.search;
+        const raw = req.query.search;
+        let parsed: any;
+        try {
+          parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch {
+          parsed = raw;
+        }
+        if (typeof parsed === 'string') {
+          const resp = await (Model as any).search(parsed);
+          res.ok?.(JSON.parse(JSON.stringify(resp)));
+          return;
+        }
+        query = parsed;
         // Clean appId and userId
         if (query && query.appId) {
           delete query.appId;
@@ -52,9 +68,6 @@ const <%= service %>sController: <%= service %>sControllerType = {
         if (query && query.accountId) {
           delete query.accountId;
         }
-        
-        const resp = await (Model as any).search(query);
-        res.ok?.(JSON.parse(JSON.stringify(resp)));
       } else {
         query = { ...req.query };
         // Clean appId and userId
@@ -64,8 +77,9 @@ const <%= service %>sController: <%= service %>sControllerType = {
         if (query && query.accountId) {
           delete query.accountId;
         }
-        
-        const _query: any = {};
+      }
+
+      const _query: any = {};
         const projection = query.select; // Projection should be comma separated. eg. name,location
         let ourProjection: string[] | undefined;
         
@@ -210,6 +224,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   findOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash, models } = await getModels();
       const _query: any = {};
       const id = req.params.id;
       const query: any = req.query || {};
@@ -247,6 +262,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   create: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const data: any = Array.isArray(req.body) ? [...req.body] : { ...req.body };
       if (data && (data as any).secure) {
         delete (data as any).secure;
@@ -273,6 +289,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   update: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const query: any = { ...req.query };
       const _query: any = {};
       // Clean appId and userId
@@ -304,6 +321,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   updateOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const _query: any = {};
       const id = req.params.id;
       const data: any = { ...req.body };
@@ -332,6 +350,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   delete: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const _query: any = {};
       const query: any = { ...req.query };
       // Clean appId and userId
@@ -340,6 +359,17 @@ const <%= service %>sController: <%= service %>sControllerType = {
       }
       if (query && query.accountId) {
         delete query.accountId;
+      }
+      // Convert MongoDB-style _id operators to Sequelize Op
+      if (query._id && typeof query._id === 'object' && !(query._id instanceof Date)) {
+        const idCond: any = {};
+        if (query._id.$gt != null) { idCond[Op.gt] = query._id.$gt; }
+        if (query._id.$lt != null) { idCond[Op.lt] = query._id.$lt; }
+        if (query._id.$gte != null) { idCond[Op.gte] = query._id.$gte; }
+        if (query._id.$lte != null) { idCond[Op.lte] = query._id.$lte; }
+        if (Object.keys(idCond).length) {
+          query._id = idCond;
+        }
       }
 
       _query.where = query;
@@ -376,6 +406,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   deleteOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const _query: any = {};
       const id = req.params.id;
 
@@ -415,6 +446,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   restore: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const id = req.params.id;
       
       // Find data by ID from trash
@@ -428,7 +460,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
       const resp = await (Model as any).create(trashItem.data);
       
       // Delete from trash
-      await (Trash as any).findByIdAndRemove(id);
+      await (Trash as any).findByIdAndDelete(id);
       res.ok?.(resp);
     } catch (err: any) {
       next(err);
@@ -443,6 +475,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   getSchema: async function (_req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
+      const { Model, Trash } = await getModels();
       const modelName = service;
       const metadata = extractSequelizeModelMetadata(modelName, Model as import('../types/models.js').SequelizeModelType);
       if (!metadata) {

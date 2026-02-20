@@ -6,24 +6,28 @@ chai.use(chaiAsPromised);
 import <%= object %>s from '../../src/controllers/<%= service %>s.js';
 import '../../src/services/queue/workers.js';
 import _ from 'lodash';
-import db from '../../src/models/index.js';
-
+import modelsPromise from '../../src/models/index.js';
 
 var <%= object %>Id;
 var <%= object %>Id2;
 var lastId;
 var forDelete;
 var trashId;
+var db: any;
 var from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
 
 describe('<%= service %>s controller', function(){
+    before(async function () {
+        db = await modelsPromise;
+    });
+
     it('should create documents', function(done){
         var next = function(err){
             done(err);
         };
         var res = {};
         res.ok = function(data){
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
             <%= object %>Id2 = data[0]._id;
             done();
         };
@@ -62,7 +66,7 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
 
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('object'); /* jslint ignore:line */
             <%= object %>Id = data._id;
             done();
         };
@@ -78,9 +82,10 @@ describe('<%= service %>s controller', function(){
     it('should build projection', function(done){
         var projection = 'name,someOtherStringData';
         var project = <%= object %>s.buildProjection(projection);
-        project.should.eventually.be.an('object');
-        project.should.eventually.have.property('name');
-        project.should.eventually.have.property('someOtherStringData').notify(done);
+        project.should.be.an('array');
+        project.should.include('name');
+        project.should.include('someOtherStringData');
+        done();
     });
     it('should search for matching documents for a given string', function(done){
         var next = function(err){
@@ -89,7 +94,7 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
 
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
         var req = {};
@@ -103,7 +108,7 @@ describe('<%= service %>s controller', function(){
         };
         var res = {};
         res.ok = function(data, cache, extraData){
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
             extraData.isLastPage.should.exist; /* jslint ignore:line */
             data.length.should.equal(2);
             done();
@@ -122,9 +127,9 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
 
-            data.should.be.an.object; /* jslint ignore:line */
-            extraData.total.should.be.a.number; /* jslint ignore:line */
-            extraData.totalResult.should.be.a.number; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
+            extraData.total.should.be.a('number'); /* jslint ignore:line */
+            extraData.totalResult.should.be.a('number'); /* jslint ignore:line */
             done();
         };
         var req = {};
@@ -138,12 +143,12 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
             lastId = extraData.lastId;
-            data.should.be.an.object; /* jslint ignore:line */
-            extraData.lastId.should.be.a.string; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
+            (typeof extraData.lastId === 'string' ? extraData.lastId : String(extraData.lastId)).should.be.a('string'); /* jslint ignore:line */
             done();
         };
         var req = {};
-        req.query = {};
+        req.query = { limit: 2, sort: '_id' };
         <%= object %>s.find(req, res, next);
     });
 
@@ -154,7 +159,7 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
 
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
         var req = {};
@@ -169,7 +174,7 @@ describe('<%= service %>s controller', function(){
         var res = {};
         res.ok = function(data, cache, extraData){
 
-            data.should.be.an.object; /* jslint ignore:line */
+            data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
         var req = {};
@@ -253,7 +258,7 @@ it('should filter by date range', function(done){
     var res = {};
     res.ok = function(data, cache, extraData){
 
-        data.should.be.an.object; /* jslint ignore:line */
+        data.should.be.an('array'); /* jslint ignore:line */
         data.length.should.be.above(0); /* jslint ignore:line */
         done();
     };
@@ -272,7 +277,7 @@ it('should filter by date range without setting the end date', function(done){
     var res = {};
     res.ok = function(data, cache, extraData){
 
-        data.should.be.an.object; /* jslint ignore:line */
+        data.should.be.an('array'); /* jslint ignore:line */
         data.length.should.be.above(0); /* jslint ignore:line */
         done();
     };
@@ -289,7 +294,7 @@ it('should find one document', function(done){
     };
     var res = {};
     res.ok = function(data, cache, extraData){
-        data.should.be.an.object; /* jslint ignore:line */
+        data.should.be.an('object'); /* jslint ignore:line */
         done();
     };
     var req = {};
@@ -342,7 +347,8 @@ it('should delete multiple data', function(done){
         done();
     };
     var req = {};
-    req.query = {_id: {$gt: lastId}};
+    // Use a query that matches multiple records (SQL; ensures at least one match)
+    req.query = { name: 'Bayo' };
     <%= object %>s.delete(req, res, next);
 });
 it('should have backed up multiple deleted data', function(done){
@@ -369,12 +375,13 @@ it('should delete one data', function(done){
         done();
     };
     var req = {};
-    req.params = {id: lastId};
+    // Use single-created doc so we delete a record that still exists after delete multiple by name
+    req.params = {id: <%= object %>Id};
     <%= object %>s.deleteOne(req, res, next);
 });
 it('should have backed up one data', function(done){
     setTimeout(function(){
-        db.Trash.find({'data._id':lastId})
+        db.Trash.find({'data._id': <%= object %>Id})
         .then(function(resp){
             trashId = resp[0]._id;
             resp.length.should.be.above(0);

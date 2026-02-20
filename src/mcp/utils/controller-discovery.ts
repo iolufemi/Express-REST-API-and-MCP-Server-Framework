@@ -10,15 +10,17 @@ import { ControllerMethodMetadata } from '../../types/mcp.js';
 import { getControllerMethodMetadata } from './mcp-annotations.js';
 
 /**
- * Discover all controller files
+ * Discover all controller files.
+ * Resolves to project src/controllers (works when run from repo root or via tsx).
  */
-export function discoverControllerFiles(controllersDir: string = path.join(__dirname, '../../controllers')): string[] {
+export function discoverControllerFiles(controllersDir?: string): string[] {
+  const resolved = controllersDir ?? path.join(process.cwd(), 'src', 'controllers');
   try {
-    const files = fs.readdirSync(controllersDir);
+    const files = fs.readdirSync(resolved);
     return files
       .filter(file => file.endsWith('.ts') || file.endsWith('.js'))
       .filter(file => file !== 'index.ts' && file !== 'index.js')
-      .map(file => path.join(controllersDir, file));
+      .map(file => path.join(resolved, file));
   } catch (error) {
     console.error('Error discovering controller files:', error);
     return [];

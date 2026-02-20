@@ -113,20 +113,28 @@ gulp.task('service', function(done) {
     });
 
     // Create the Route Unit Test
-    fs.readFile(isSQL ? './template/route_sql_test.tmpl' : './template/route_test.tmpl', function(err, data) {
-        if (err) {
-            throw err;
+    (function() {
+        var routeTestTmpl = isSQL ? './template/route_sql_test.tmpl' : (baseurl && endpoint ? './template/route_api_test.tmpl' : './template/route_test.tmpl');
+        var routeTestData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase };
+        if (baseurl && endpoint) {
+            routeTestData.endpoint = endpoint;
+            routeTestData.baseurl = baseurl;
         }
-        var tpl = _.template(data);
-        var result = tpl({ service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase });
-
-        fs.writeFile('./test/routes/' + namePlural + '.test.ts', result, function(err) {
+        fs.readFile(routeTestTmpl, function(err, data) {
             if (err) {
                 throw err;
             }
-            console.log('Route unit test created at ./test/routes/' + namePlural + '.test.ts');
+            var tpl = _.template(data);
+            var result = tpl(routeTestData);
+
+            fs.writeFile('./test/routes/' + namePlural + '.test.ts', result, function(err) {
+                if (err) {
+                    throw err;
+                }
+                console.log('Route unit test created at ./test/routes/' + namePlural + '.test.ts');
+            });
         });
-    });
+    })();
 
     // Create the Model
     if (baseurl && endpoint) {
@@ -167,20 +175,27 @@ gulp.task('service', function(done) {
     }
 
     // Create the Model Unit Test
-    fs.readFile(isSQL ? './template/model_sql_test.tmpl' : './template/model_test.tmpl', function(err, data) {
-        if (err) {
-            throw err;
+    (function() {
+        var modelTestTmpl = isSQL ? './template/model_sql_test.tmpl' : (baseurl && endpoint ? './template/model_api_test.tmpl' : './template/model_test.tmpl');
+        var modelTestData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase };
+        if (baseurl && endpoint) {
+            modelTestData.endpoint = endpoint;
         }
-        var tpl = _.template(data);
-        var result = tpl({ service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase });
-
-        fs.writeFile('./test/models/' + namePlural + '.test.ts', result, function(err) {
+        fs.readFile(modelTestTmpl, function(err, data) {
             if (err) {
                 throw err;
             }
-            console.log('Model unit test created at ./test/models/' + namePlural + '.test.ts');
+            var tpl = _.template(data);
+            var result = tpl(modelTestData);
+
+            fs.writeFile('./test/models/' + namePlural + '.test.ts', result, function(err) {
+                if (err) {
+                    throw err;
+                }
+                console.log('Model unit test created at ./test/models/' + namePlural + '.test.ts');
+            });
         });
-    });
+    })();
 
     // Create the controller
     fs.readFile(isSQL ? './template/controller_sql.tmpl' : './template/controller.tmpl', function(err, data) {
@@ -199,20 +214,27 @@ gulp.task('service', function(done) {
     });
 
     // Create the controller Unit test
-    fs.readFile(isSQL ? './template/controller_sql_test.tmpl' : './template/controller_test.tmpl', function(err, data) {
-        if (err) {
-            throw err;
+    (function() {
+        var controllerTestTmpl = isSQL ? './template/controller_sql_test.tmpl' : (baseurl && endpoint ? './template/controller_api_test.tmpl' : './template/controller_test.tmpl');
+        var controllerTestData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase };
+        if (baseurl && endpoint) {
+            controllerTestData.endpoint = endpoint;
         }
-        var tpl = _.template(data);
-        var result = tpl({ service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase });
-
-        fs.writeFile('./test/controllers/' + namePlural + '.test.ts', result, function(err) {
+        fs.readFile(controllerTestTmpl, function(err, data) {
             if (err) {
                 throw err;
             }
-            console.log('Controller unit test created at ./test/controllers/' + namePlural + '.test.ts');
+            var tpl = _.template(data);
+            var result = tpl(controllerTestData);
+
+            fs.writeFile('./test/controllers/' + namePlural + '.test.ts', result, function(err) {
+                if (err) {
+                    throw err;
+                }
+                console.log('Controller unit test created at ./test/controllers/' + namePlural + '.test.ts');
+            });
         });
-    });
+    })();
 
     // Create MCP service registration file
     fs.readFile('./template/mcp_service.tmpl', function(err, data) {
@@ -245,7 +267,7 @@ gulp.task('service', function(done) {
             return done();
         }
         var tpl = _.template(data);
-        var templateData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase, registrationBasename: registrationBasename };
+        var templateData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase, registrationBasename: registrationBasename, namePlural: namePlural, nameCapitalisePlural: nameCapitalisePlural };
         var result = tpl(templateData);
 
         var mcpTestDir = './test/mcp';

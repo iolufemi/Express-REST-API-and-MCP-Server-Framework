@@ -12,15 +12,20 @@ import _ from 'lodash';
 import response from '../../src/services/response/index.js';
 import express from 'express';
 import bodyParser from 'body-parser';
-import routers from '../../src/routes/index.js';
+import routerPromise from '../../src/routes/index.js';
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(response);
-app.use(routers);
 
-const agent = request.agent(app);
+let agent: ReturnType<typeof request.agent>;
+before(async function () {
+  this.timeout(10000);
+  const router = await routerPromise;
+  app.use(router);
+  agent = request.agent(app);
+});
 
 const res = {};
 const req = {};
@@ -275,8 +280,7 @@ describe('Delete', function(){
 
 describe('Restore', function(){
     it('should restore a previously deleted data', function(done){
-        import('../../src/models/index.js').then((m) => {
-            const models = m.default;
+        import('../../src/models/index.js').then((m) => m.default).then((models) => {
             const Trash = models.Trash;
             const tid = oneId;
             setTimeout(function(){

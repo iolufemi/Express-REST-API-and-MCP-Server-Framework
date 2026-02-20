@@ -10,7 +10,8 @@ import <%= objectCamelCase %>sController from '../../src/controllers/<%= service
 // @ts-ignore - lodash types may not be available
 import _ from 'lodash';
 import modelsPromise from '../../src/models/index.js';
-import { createMockRequest, createMockResponse } from '../helpers.js';
+import { createMockRequest, createMockResponse, createTestServer } from '../helpers.js';
+import '../../src/services/queue/workers.js';
 
 let db: any;
 let Model: any;
@@ -20,13 +21,28 @@ let lastId: any;
 let forDelete: any;
 let trashId: any;
 let objId1: any;
+let testServer: Awaited<ReturnType<typeof createTestServer>> | null = null;
 const from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
 
-describe('<%= service %>s controller', function(){
+describe('<%= service %>s controller (API → local /<%= endpoint %>)', function () {
+    this.timeout(20000);
+
     before(async function () {
+        testServer = await createTestServer();
         db = await modelsPromise;
         Model = db.<%= service %>s;
+        if (Model && typeof Model.setBaseUrl === 'function') {
+            Model.setBaseUrl('http://localhost:' + testServer!.port);
+        }
         objId1 = new (mongoose.Types as any).ObjectId();
+    });
+
+    after(function (done) {
+        if (testServer && testServer.server) {
+            testServer.server.close(done);
+        } else {
+            done();
+        }
     });
 
     it('should create documents', function(done){
@@ -159,7 +175,7 @@ describe('<%= service %>s controller', function(){
                 done();
             };
             const req = createMockRequest({
-                query: {}
+                query: { limit: 2, sort: '_id' }
             });
             <%= objectCamelCase %>sController.find(req, res, next);
         });
@@ -274,8 +290,9 @@ describe('<%= service %>s controller', function(){
                     someOtherStringData: 'Meta'
                 }]
             });
-            <%= objectCamelCase %>sController.create(req, res, next);    
+            <%= objectCamelCase %>sController.create(req, res, next);
         });
+    });
 
 it('should filter by date range', function(done){
     const next = function(err: any): void {
@@ -373,11 +390,12 @@ describe('Delete', function(){
         };
         const res = createMockResponse();
         res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+            forDelete = _.map(data, (value: any) => value._id != null ? value._id.toString() : value._id);
             data.length.should.be.above(0); /* jslint ignore:line */
             done();
         };
         const req = createMockRequest({
-            query: { _id: { $gt: lastId } }
+            query: { name: 'Bayo' }
         });
         <%= objectCamelCase %>sController.delete(req, res, next);
     });
@@ -407,13 +425,13 @@ describe('Delete', function(){
             done();
         };
         const req = createMockRequest({
-            params: { id: lastId }
+            params: { id: <%= objectCamelCase %>Id }
         });
         <%= objectCamelCase %>sController.deleteOne(req, res, next);
     });
     it('should have backed up one data', function(done){
         setTimeout(function(){
-            (db.Trash as any).find({'data._id':lastId.toString()})
+            (db.Trash as any).find({'data._id': <%= objectCamelCase %>Id})
             .then(function(resp: any): void {
                 trashId = resp[0]._id;
                 resp.length.should.be.above(0);

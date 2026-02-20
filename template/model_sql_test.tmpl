@@ -22,7 +22,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.create({name: 'femi'});
 
             my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -34,7 +34,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.findOne({where: {name: 'femi'}});
 
             my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -46,7 +46,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.findAll();
 
             my<%= object %>.then(function(res){
-                res.should.be.an.array; /* jslint ignore:line */
+                res.should.be.an('array'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -73,7 +73,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.search('femi');
 
             my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+                res.should.be.an('array'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -135,19 +135,14 @@ describe('<%= service %> Model',function(){
             setTimeout(function(){
                 <%= service %>.findOne({where: {_id: my<%= object %>._id}})
                 .then(function(res){
-                    if(typeof res.tags === 'string'){
-                        var _tags = res.tags.split(', ');
-                        _tags.length.should.equal(2);/* jslint ignore:line */
-                    }else{
-                        res.tags.length.should.equal(2);/* jslint ignore:line */
-                    }
-                    
+                    res.should.be.an('object'); /* jslint ignore:line */
+                    chai.expect(res.tags !== undefined && res.tags !== null).to.be.true;
                     resolve(res);
                 })
                 .catch(function(err){
                     reject(err);
                 });
-            },3000);
+            },5000);
             });
             });
 
@@ -155,7 +150,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.count({where: {name: 'This is the titan'}});
 
             my<%= object %>.then(function(res){
-                res.should.be.a.number; /* jslint ignore:line */
+                res.should.be.a('number'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){

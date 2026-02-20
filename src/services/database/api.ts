@@ -33,11 +33,23 @@ class ApiModel implements Thenable<any> {
   private data: any = null;
   private id: string | null = null;
   private url: string;
+  private baseurl: string;
+  private endpoint: string;
 
   constructor(baseurl: string, endpoint: string, headers: Record<string, string> = {}) {
     log.info('API connection successful');
     this.headers = _.extend(this.headers, headers);
-    this.url = baseurl + '/' + endpoint;
+    this.baseurl = baseurl.replace(/\/$/, '');
+    this.endpoint = endpoint.replace(/^\//, '');
+    this.url = this.baseurl + '/' + this.endpoint;
+  }
+
+  /**
+   * Set base URL at runtime (e.g. in tests to point at local server).
+   */
+  setBaseUrl(baseurl: string): void {
+    this.baseurl = baseurl.replace(/\/$/, '');
+    this.url = this.baseurl + '/' + this.endpoint;
   }
 
   private buildSelect(select: Record<string, number>): string {
