@@ -30,7 +30,7 @@ before(async function () {
 const res = {};
 const req = {};
 let nextChecker = false;
-const next = function(){
+const _next = function(){
     if(arguments.length > 0){
         console.log(arguments[0]);
     }else{
@@ -38,11 +38,11 @@ const next = function(){
     }
     return nextChecker;
 };
-res.json = function(data){
+res.json = function(_data){
     return res;
 };
 res.badRequest = sinon.spy();
-res.status = function(status){
+res.status = function(_status){
     return res;
 };
 const header = {};
@@ -60,9 +60,9 @@ header.set = function(data){
 req.method = '';
 
 let tag;
-const objId1 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496d');
-const objId2 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496e');
-const objId3 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496c');
+const _objId1 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496d');
+const _objId2 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496e');
+const _objId3 = new (mongoose.Types as any).ObjectId('59abab38ead925031a71496c');
 let last;
 let oneId;
 let oneId2;

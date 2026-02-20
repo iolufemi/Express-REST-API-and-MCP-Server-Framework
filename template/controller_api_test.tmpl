@@ -2,12 +2,12 @@
 import chai from 'chai';
 chai.should();
 import { expect } from 'chai';
-// @ts-ignore - chai-as-promised types may not be available
+// @ts-expect-error - chai-as-promised types may not be available
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 import mongoose from 'mongoose';
 import <%= objectCamelCase %>sController from '../../src/controllers/<%= service %>s.js';
-// @ts-ignore - lodash types may not be available
+// @ts-expect-error - lodash types may not be available
 import _ from 'lodash';
 import modelsPromise from '../../src/models/index.js';
 import { createMockRequest, createMockResponse, createTestServer } from '../helpers.js';

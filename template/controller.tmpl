@@ -56,7 +56,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   find: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       let query: any = {};
       
       if (req.query.search) {
@@ -216,7 +216,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   findOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const id = req.params.id;
       const query: any = req.query || {};
       const populate = query.populate; // Samples: 'name location' will populate name and location references. only supports this for now | 'name', 'firstname' will populate name reference and only pick the firstname attribute
@@ -246,7 +246,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   create: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const data: any = Array.isArray(req.body) ? req.body : { ...req.body };
       if (data && !Array.isArray(data) && data.secure) {
         delete data.secure;
@@ -269,7 +269,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   update: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const query: any = { ...req.query };
       // Clean appId and userId
       if (query && query.appId) {
@@ -299,7 +299,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   updateOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const id = req.params.id;
       const data: any = { ...req.body };
       if (data && data.secure) {
@@ -325,7 +325,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   delete: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const query: any = { ...req.query };
       // Clean appId and userId
       if (query && query.appId) {
@@ -368,7 +368,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   deleteOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const id = req.params.id;
       
       // Find match
@@ -435,7 +435,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   getSchema: async function (_req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const modelName = service;
       let metadata: { name: string; fields: any[]; description?: string; mcpDescription?: string; collection?: string; table?: string } | null = null;
 

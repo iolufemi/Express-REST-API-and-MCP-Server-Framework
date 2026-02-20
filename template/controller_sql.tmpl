@@ -44,7 +44,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   find: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       let query: any = {};
       
       if (req.query.search) {
@@ -224,7 +224,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   findOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash, models } = await getModels();
+      const { Model, models } = await getModels();
       const _query: any = {};
       const id = req.params.id;
       const query: any = req.query || {};
@@ -262,7 +262,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   create: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const data: any = Array.isArray(req.body) ? [...req.body] : { ...req.body };
       if (data && (data as any).secure) {
         delete (data as any).secure;
@@ -289,7 +289,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   update: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const query: any = { ...req.query };
       const _query: any = {};
       // Clean appId and userId
@@ -321,7 +321,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   updateOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const _query: any = {};
       const id = req.params.id;
       const data: any = { ...req.body };
@@ -350,7 +350,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   delete: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const _query: any = {};
       const query: any = { ...req.query };
       // Clean appId and userId
@@ -406,7 +406,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   deleteOne: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const _query: any = {};
       const id = req.params.id;
 
@@ -475,7 +475,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   getSchema: async function (_req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model, Trash } = await getModels();
+      const { Model } = await getModels();
       const modelName = service;
       const metadata = extractSequelizeModelMetadata(modelName, Model as import('../types/models.js').SequelizeModelType);
       if (!metadata) {

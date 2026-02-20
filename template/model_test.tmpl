@@ -4,6 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
+chai.use(chaiAsPromised);
 import q from 'q';
 
 import <%= service %> from '../../src/models/<%= service %>s.js';
@@ -58,7 +59,7 @@ describe('<%= service %> Model',function(){
             var cb = sinon.spy();
             var my<%= objectCamelCase %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa'});
 
-            my<%= objectCamelCase %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -72,7 +73,7 @@ describe('<%= service %> Model',function(){
             var cb = sinon.spy();
             var my<%= objectCamelCase %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa Olanipekun'});
 
-            my<%= objectCamelCase %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -102,7 +103,7 @@ describe('<%= service %> Model',function(){
             our<%= objectCamelCase %>.then(function(res){
                 res.should.be.an('array'); /* jslint ignore:line */
                 return <%= service %>.deleteOne({name: 'bolu'});
-            }).then(function(res){
+            }).then(function(_res){
                 cb2();
                 cb2.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -116,7 +117,7 @@ describe('<%= service %> Model',function(){
             var cb = sinon.spy();
             var my<%= objectCamelCase %> = <%= service %>.deleteMany({name: 'femi'});
 
-            my<%= objectCamelCase %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -145,7 +146,7 @@ describe('<%= service %> Model',function(){
                 id2 = res._id;
                 return <%= service %>.updateMany({_id: id},{name: 'This is the titan'});
             })
-            .then(function(res){
+            .then(function(_res){
                 return <%= service %>.findById(id);
             })
             .then(function(res){
