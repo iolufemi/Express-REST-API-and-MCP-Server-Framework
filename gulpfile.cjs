@@ -11,7 +11,6 @@ var runSequence = require('run-sequence');
 var conventionalChangelog = require('gulp-conventional-changelog');
 var conventionalGithubReleaser = require('conventional-github-releaser');
 var bump = require('gulp-bump');
-var gutil = require('gulp-util');
 var git = require('gulp-git');
 var fs = require('fs');
 // Config is only used for gitOAuthToken in release tasks, so we can use a default
@@ -308,7 +307,7 @@ gulp.task('bump-version', function() {
     }
     else {
         return gulp.src(['./package.json'])
-            .pipe(bump({ type: args.r }).on('error', gutil.log))
+            .pipe(bump({ type: args.r }).on('error', function (err) { console.error(err); }))
             .pipe(gulp.dest('./'));
     }
 });
