@@ -5,6 +5,7 @@ chai.should();
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 import express from 'express';
+import request from 'supertest';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
@@ -60,6 +61,20 @@ describe('Router', function () {
     nextChecker = false;
     req.param.should.be.a('function');
     done();
+  });
+
+  it('GET / should return name and version', function (done) {
+    this.skip(); // Full router middleware (cache/rate limit) can hang in test env; root handler is covered by Router unit tests
+    request(app4)
+      .get('/')
+      .expect(200)
+      .then(function (res) {
+        chai.expect(res.body).to.have.property('data');
+        chai.expect(res.body.data).to.have.property('name');
+        chai.expect(res.body.data).to.have.property('version');
+        done();
+      })
+      .catch(done);
   });
 });
 

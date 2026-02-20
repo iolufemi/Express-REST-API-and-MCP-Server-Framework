@@ -22,7 +22,7 @@ const router: Router = express.Router();
  * - queues: Queue status
  * - timestamp: Current server time
  */
-router.get('/health', async (_req: ExpressRequest, res: ExpressResponse) => {
+router.get('/', async (_req: ExpressRequest, res: ExpressResponse) => {
   try {
     const dbHealth = checkDatabaseHealth();
     const queueHealth: Record<string, boolean> = {};
@@ -98,7 +98,7 @@ router.get('/health', async (_req: ExpressRequest, res: ExpressResponse) => {
  * Returns 200 if the application is ready to accept traffic
  * Returns 503 if the application is not ready
  */
-router.get('/health/ready', async (_req: ExpressRequest, res: ExpressResponse) => {
+router.get('/ready', async (_req: ExpressRequest, res: ExpressResponse) => {
   try {
     const dbHealth = checkDatabaseHealth();
     
@@ -138,7 +138,7 @@ router.get('/health/ready', async (_req: ExpressRequest, res: ExpressResponse) =
  * Returns 200 if the application is alive
  * This is a simple check that the process is running
  */
-router.get('/health/live', (_req: ExpressRequest, res: ExpressResponse) => {
+router.get('/live', (_req: ExpressRequest, res: ExpressResponse) => {
   res.status(200).json({
     alive: true,
     timestamp: new Date().toISOString(),
