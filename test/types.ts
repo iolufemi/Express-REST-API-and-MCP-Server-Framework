@@ -2,7 +2,7 @@
  * Type definitions for test utilities
  */
 
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, NextFunction } from 'express';
 
 export interface MockRequest extends Partial<Request> {
   body?: any;

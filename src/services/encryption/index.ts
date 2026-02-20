@@ -1,5 +1,8 @@
-import * as aesjs from 'aes-js';
+import aesjsModule from 'aes-js';
 import * as crypto from 'crypto';
+
+// ESM interop: CJS module may export as default
+const aesjs = (aesjsModule as unknown as { default?: typeof aesjsModule }).default ?? aesjsModule;
 import config from '../../config/index.js';
 import randomstring from 'randomstring';
 import debug from 'debug';
@@ -20,9 +23,11 @@ export const encryption = {
 
       const bits = 256;
 
-      crypto.pbkdf2(config.secret, salt, 100000, bits / 8, 'sha512', (err: Error | null, key: Buffer) => {
+      crypto.pbkdf2(config.secret, salt, 100000, bits / 8, 'sha512', (err: Error | null, key: Buffer | undefined) => {
         if (err) {
           reject(err);
+        } else if (!key) {
+          reject(new Error('pbkdf2 did not produce a key'));
         } else {
           const randomNumber = Math.floor((Math.random() * 9999) + 1);
           resolve(Buffer.from(aesjs.utils.hex.fromBytes(key) + '//////' + randomNumber).toString('base64'));

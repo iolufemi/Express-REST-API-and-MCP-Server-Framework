@@ -4,19 +4,22 @@ import chai from 'chai';
 chai.should();
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
-import request from 'supertest';
 import express from 'express';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 
 import config from '../../src/config/index.js';
-import router from '../../src/routes/index.js';
+import routerPromise from '../../src/routes/index.js';
 
+let router: Awaited<typeof routerPromise>;
 const app4 = express();
-app4.use('/', router);
 
-const agent4 = request.agent(app4);
+before(async function () {
+  this.timeout(10000);
+  router = await routerPromise;
+  app4.use('/', router);
+});
 
 const res: any = {};
 const req: any = {};
@@ -29,11 +32,11 @@ const next = function () {
   }
   return nextChecker;
 };
-res.json = function (data: any) {
+res.json = function (_data: unknown) {
   return res;
 };
 res.badRequest = sinon.spy();
-res.status = function (status: number) {
+res.status = function (_status: number) {
   return res;
 };
 const header: any = {};
@@ -61,17 +64,37 @@ describe('Router', function () {
 });
 
 describe('Cache Test', function () {
-  it('should initialize the API cache', function (done) {
+  it('should initialize the API cache when Redis is available', function (done) {
+    const redisConfigured = !!config.redisURL;
     res.set = sinon.spy();
-    (router as any)._APICache(req, res, next);
-    nextChecker.should.be.true; /* jslint ignore:line */
-    nextChecker = false;
-    req.cache.should.be.a('object');
-    req.cacheKey.should.be.a('array');
-    res.set.should.be.called.once; /* jslint ignore:line */
-    res.set.should.be.calledWith({
-      'Cache-Control': 'private, max-age=' + config.frontendCacheExpiry + ''
-    });
-    done();
+    req.method = 'POST';
+    req.url = '/test';
+    req.ip = '127.0.0.1';
+    const nextCb = () => {
+      nextChecker = true;
+      const redisAvailable = (router as { _redisAvailable?: boolean })._redisAvailable;
+      if (!redisConfigured) {
+        this.skip();
+        return;
+      }
+      if (!redisAvailable) {
+        done(new Error('Redis is configured but router._redisAvailable is false; database import may have failed in createRouter.'));
+        return;
+      }
+      chai.expect(req.cache, 'req.cache should be set when Redis is available').to.be.ok;
+      req.cache.should.be.an('object');
+      req.cacheKey.should.be.an('array');
+chai.expect((res.set as sinon.SinonSpy).calledOnce).to.be.true;
+        chai.expect((res.set as sinon.SinonSpy).calledWith({
+          'Cache-Control': 'private, max-age=' + config.frontendCacheExpiry + ''
+        })).to.be.true;
+      done();
+    };
+    try {
+      (router as unknown as { _APICache: (req: unknown, res: unknown, next: () => void) => void })._APICache(req, res, nextCb);
+    } catch (_err) {
+      if (redisConfigured) done(_err as Error);
+      else this.skip();
+    }
   });
 });

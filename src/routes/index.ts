@@ -38,7 +38,8 @@ async function createRouter(): Promise<Router> {
   let redisClient: unknown = null;
   try {
     const db = await import('../services/database/index.js');
-    redisClient = db.default?.redis ?? null;
+    const def = db.default as { redis?: unknown } | undefined;
+    redisClient = def?.redis ?? null;
   } catch {
     log.warn('Redis client not available, rate limiting may not work');
   }
@@ -54,7 +55,9 @@ async function createRouter(): Promise<Router> {
     _sanitizeRequestUrl: (req: ExpressRequest) => string;
     _allRequestData: (req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => void;
     _APICache: (req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => void;
+    _redisAvailable?: boolean;
   }
+  (router as RouterWithLoadRoutes)._redisAvailable = !!redisClient;
 
   (router as RouterWithLoadRoutes)._loadRoutes = async function (routeFiles: string[]): Promise<Record<string, Router>> {
     const versions: Array<Record<string, string>> = [];
@@ -159,7 +162,7 @@ async function createRouter(): Promise<Router> {
       return;
     }
     
-    const cache = new EngineRedis(redisClient as ConstructorParameters<typeof EngineRedis>[0]);
+    const cache = new EngineRedis({ client: redisClient } as ConstructorParameters<typeof EngineRedis>[0]);
     const APICache = new Cacheman(me.name, { engine: cache, ttl: parseInt(config.backendCacheExpiry || '90', 10) });
     req.cache = APICache;
     // Tell Frontend to Cache responses

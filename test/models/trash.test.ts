@@ -1,8 +1,5 @@
 import chai from 'chai';
 chai.should();
-import chaiAsPromised from 'chai-as-promised';
-// chai.use(chaiAsPromised);
-import mongooseMock from 'mongoose-mock';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
@@ -33,7 +30,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -46,7 +43,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -59,7 +56,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.array; /* jslint ignore:line */
+          res.should.be.an('array');
           done();
         })
         .catch(function (err: any) {
@@ -75,9 +72,9 @@ describe('Trash Model', function () {
       );
 
       mytrash
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -93,9 +90,9 @@ describe('Trash Model', function () {
       );
 
       mytrash
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -108,7 +105,9 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          (Array.isArray(res) ? res : res).should.be.ok;
+          if (Array.isArray(res)) chai.expect(res).to.be.an('array');
+          else chai.expect(res).to.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -154,12 +153,12 @@ describe('Trash Model', function () {
 
       ourtrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          (Array.isArray(res) ? res : res).should.be.ok;
           return mytrash;
         })
-        .then(function (res: any) {
+        .then(function () {
           cb2();
-          cb2.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb2 as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -172,9 +171,9 @@ describe('Trash Model', function () {
       const mytrash = Trash.deleteMany({ 'data.RequestId': 'kokoko456789' });
 
       mytrash
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -221,7 +220,7 @@ describe('Trash Model', function () {
           id2 = res._id;
           return Trash.updateMany({ _id: id }, { 'data.RequestId': 'kgtggokoko456789' });
         })
-        .then(function (res: any) {
+        .then(function (_res: any) {
           return Trash.findOne({ _id: id });
         })
         .then(function (res: any) {
@@ -238,7 +237,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.a.number; /* jslint ignore:line */
+          res.should.be.a('number');
           done();
         })
         .catch(function (err: any) {
@@ -251,7 +250,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -260,11 +259,11 @@ describe('Trash Model', function () {
     });
 
     it('should find a record by id and delete', function (done) {
-      const mytrash = Trash.findByIdAndRemove(id2);
+      const mytrash = Trash.findByIdAndDelete(id2);
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -277,7 +276,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -290,7 +289,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -306,7 +305,7 @@ describe('Trash Model', function () {
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -315,11 +314,11 @@ describe('Trash Model', function () {
     });
 
     it('should find the first match from a query and delete', function (done) {
-      const mytrash = Trash.findOneAndRemove({ 'data.RequestId': 'kgtggohyu0900koko456789' });
+      const mytrash = Trash.findOneAndDelete({ 'data.RequestId': 'kgtggohyu0900koko456789' });
 
       mytrash
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {

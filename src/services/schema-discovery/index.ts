@@ -32,14 +32,19 @@ interface JsonSchemaRoot {
   [key: string]: unknown;
 }
 
+/** HTTP client interface for fetching (test-injectable). */
+export type SchemaDiscoveryHttpClient = (config: AxiosRequestConfig) => Promise<{ data: unknown; status: number }>;
+
 /**
  * Fetch remote schema from GET {baseurl}/{endpoint}/schema
  * Returns parsed JSON or null on failure (caller can fall back to existing schema).
+ * @param httpClient - Optional client for tests; uses axios when omitted.
  */
 export async function fetchRemoteSchema(
   baseurl: string,
   endpoint: string,
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
+  httpClient: SchemaDiscoveryHttpClient = axios as SchemaDiscoveryHttpClient
 ): Promise<unknown> {
   const base = baseurl.replace(/\/$/, '');
   const path = endpoint.replace(/^\//, '');
@@ -55,7 +60,7 @@ export async function fetchRemoteSchema(
   };
 
   try {
-    const response = await axios(options);
+    const response = await httpClient(options);
     return response.data;
   } catch (err: unknown) {
     const message = axios.isAxiosError(err)
@@ -183,10 +188,12 @@ export function buildModelMetadata(
  * Controller should fall back to existing _schema when this returns null.
  * @param model - API model instance with _baseurl, _endpoint, and optionally _schema
  * @param modelName - Name for the returned metadata (e.g. "Externaldatas"); defaults to endpoint
+ * @param httpClient - Optional HTTP client for tests; uses axios when omitted.
  */
 export async function discoverSchemaForApiModel(
   model: any,
-  modelName?: string
+  modelName?: string,
+  httpClient?: SchemaDiscoveryHttpClient
 ): Promise<ModelMetadata | null> {
   const baseurl = model?._baseurl;
   const endpoint = model?._endpoint;
@@ -196,7 +203,7 @@ export async function discoverSchemaForApiModel(
   }
 
   const headers: Record<string, string> = {};
-  const raw = await fetchRemoteSchema(baseurl, endpoint, headers);
+  const raw = await fetchRemoteSchema(baseurl, endpoint, headers, httpClient);
   if (raw === null) {
     return null;
   }

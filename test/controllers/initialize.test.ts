@@ -11,10 +11,10 @@ describe('Initialize controller', function () {
       done(err);
     };
     const res: any = {};
-    res.ok = function (data: any) {
-      data.should.be.an.object; /* jslint ignore:line */
-      data.should.have.property('x-tag');
-      (data as any)['x-tag'].should.be.a('string'); /* jslint ignore:line */
+    res.ok = function (data: unknown) {
+      chai.expect(data).to.be.an('object');
+      chai.expect(data).to.have.property('x-tag');
+      (data as { 'x-tag': string })['x-tag'].should.be.a('string');
       done();
     };
     const req = undefined;

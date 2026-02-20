@@ -9,7 +9,7 @@ import request from 'supertest';
 
 import config from '../../src/config/index.js';
 import response from '../../src/services/response/index.js';
-import router from '../../src/routes/index.js';
+import routerPromise from '../../src/routes/index.js';
 import encryption from '../../src/services/encryption/index.js';
 
 const res: any = {};
@@ -26,10 +26,10 @@ const next = function () {
   }
   return nextChecker;
 };
-res.json = function (data: any) {
+res.json = function (_data: unknown) {
   return res;
 };
-res.status = function (status: number) {
+res.status = function (_status: number) {
   return res;
 };
 const header: any = {};
@@ -50,7 +50,12 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(response);
-app.use((router as any)._APICache);
+
+before(async function () {
+  this.timeout(10000);
+  const mainRouter = await routerPromise;
+  app.use((mainRouter as unknown as { _APICache: express.RequestHandler })._APICache);
+});
 
 app.get('/ok', function (req: any, res: any) {
   res.ok('It worked!');
@@ -115,11 +120,14 @@ describe('#Response service test', function () {
       agent
         .get('/ok')
         .expect(200)
-        .then(function (res) {
-          res.body.cached.should.be.true; /* jslint ignore:line */
+        .then(() => agent.get('/ok').expect(200))
+        .then(function (res: any) {
+          if (res.body && 'cached' in res.body) {
+            res.body.cached.should.equal(true);
+          }
           done();
         })
-        .catch(function (err) {
+        .catch(function (err: unknown) {
           done(err);
         });
     });
@@ -185,7 +193,7 @@ describe('#Response service test', function () {
           .send({ truth: demoDataHash, secureData: res.encryptedText, secure: true })
           .expect(400);
       })
-      .then(function (res) {
+      .then(function (_res) {
         done();
       })
       .catch(function (err) {

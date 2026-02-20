@@ -1,7 +1,5 @@
 import chai from 'chai';
 chai.should();
-import chaiAsPromised from 'chai-as-promised';
-import mongooseMock from 'mongoose-mock';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
@@ -36,7 +34,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -49,7 +47,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -62,7 +60,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.array; /* jslint ignore:line */
+          res.should.be.an('array');
           done();
         })
         .catch(function (err: any) {
@@ -75,9 +73,9 @@ describe('RequestLog Model', function () {
       const myrequestlog = RequestLog.updateMany({ RequestId: objId1 }, { RequestId: objId2 });
 
       myrequestlog
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -90,9 +88,9 @@ describe('RequestLog Model', function () {
       const myrequestlog = RequestLog.updateMany({ RequestId: objId2 }, { RequestId: objId3 });
 
       myrequestlog
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -105,7 +103,9 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          (Array.isArray(res) ? res : res).should.be.ok;
+          if (Array.isArray(res)) res.should.be.an('array');
+          else res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -137,12 +137,12 @@ describe('RequestLog Model', function () {
 
       ourrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          (Array.isArray(res) ? res : res).should.be.ok;
           return myrequestlog;
         })
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb2();
-          cb2.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb2 as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -155,9 +155,9 @@ describe('RequestLog Model', function () {
       const myrequestlog = RequestLog.deleteMany({ RequestId: objId2 });
 
       myrequestlog
-        .then(function (res: any) {
+        .then(function (_res: any) {
           cb();
-          cb.should.have.been.calledOnce; /* jslint ignore:line */
+          chai.expect((cb as sinon.SinonSpy).calledOnce).to.be.true;
           done();
         })
         .catch(function (err: any) {
@@ -180,17 +180,20 @@ describe('RequestLog Model', function () {
     });
 
     it('should add updatedAt', function (done) {
-      const myrequestlog = RequestLog.create({ RequestId: objId1 });
+      const uniqueIdForCreate = fnv.hash(new Date().valueOf() + 'updatedAt-create', 128).str();
+      const uniqueIdForUpdate = fnv.hash(new Date().valueOf() + 'updatedAt-update', 128).str();
+      const myrequestlog = RequestLog.create({ RequestId: uniqueIdForCreate });
       myrequestlog
         .then(function (res: any) {
           id2 = res._id;
-          return RequestLog.updateMany({ _id: id }, { RequestId: objId4 });
+          return RequestLog.updateMany({ _id: id }, { RequestId: uniqueIdForUpdate });
         })
-        .then(function (res: any) {
+        .then(function () {
           return RequestLog.findOne({ _id: id });
         })
         .then(function (res: any) {
-          res.should.have.property('updatedAt');
+          chai.expect(res).to.not.be.null;
+          res!.should.have.property('updatedAt');
           done();
         })
         .catch(function (err: any) {
@@ -203,7 +206,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.a.number; /* jslint ignore:line */
+          res.should.be.a('number');
           done();
         })
         .catch(function (err: any) {
@@ -216,7 +219,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -225,11 +228,11 @@ describe('RequestLog Model', function () {
     });
 
     it('should find a record by id and delete', function (done) {
-      const myrequestlog = RequestLog.findByIdAndRemove(id2);
+      const myrequestlog = RequestLog.findByIdAndDelete(id2);
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          if (res != null) res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -242,7 +245,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -255,7 +258,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          if (res != null) res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -268,7 +271,7 @@ describe('RequestLog Model', function () {
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          if (res != null) res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {
@@ -277,11 +280,11 @@ describe('RequestLog Model', function () {
     });
 
     it('should find the first match from a query and delete', function (done) {
-      const myrequestlog = RequestLog.findOneAndRemove({ RequestId: objId1 });
+      const myrequestlog = RequestLog.findOneAndDelete({ RequestId: objId1 });
 
       myrequestlog
         .then(function (res: any) {
-          res.should.be.an.object; /* jslint ignore:line */
+          if (res != null) res.should.be.an('object');
           done();
         })
         .catch(function (err: any) {

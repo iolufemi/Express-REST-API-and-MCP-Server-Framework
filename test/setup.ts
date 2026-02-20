@@ -3,9 +3,9 @@
  * Sets up test environment, mocks, and global test utilities
  */
 
-import dotenv from 'dotenv';
+import { config as dotenvConfig } from 'dotenv';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 
 // ES module equivalent of __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -15,8 +15,10 @@ const __dirname = dirname(__filename);
 (global as any).__filename = __filename;
 (global as any).__dirname = __dirname;
 
-// Load test environment variables
-dotenv.config({ path: '.env.test' });
+// Load test environment variables (.env first, then .env.test overrides)
+const rootDir = dirname(__dirname);
+dotenvConfig({ path: resolve(rootDir, '.env') });
+dotenvConfig({ path: resolve(rootDir, '.env.test') });
 
 // Set test environment
 process.env.NODE_ENV = 'test';

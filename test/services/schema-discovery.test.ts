@@ -1,7 +1,6 @@
-// @ts-nocheck
+/* @ts-nocheck - test file with stub types */
 import { expect } from 'chai';
-import sinon from 'sinon';
-import axios from 'axios';
+import type { SchemaDiscoveryHttpClient } from '../../src/services/schema-discovery/index.js';
 import {
   fetchRemoteSchema,
   jsonSchemaToSchemaFieldDefinitions,
@@ -10,46 +9,36 @@ import {
 } from '../../src/services/schema-discovery/index.js';
 
 describe('Schema Discovery Service', function () {
-  let axiosRequestStub: sinon.SinonStub;
-
-  beforeEach(function () {
-    axiosRequestStub = sinon.stub(axios, 'request');
-  });
-
-  afterEach(function () {
-    axiosRequestStub.restore();
-  });
-
   describe('fetchRemoteSchema', function () {
     it('returns parsed JSON when GET returns 200 and valid JSON', async function () {
       const data = { type: 'object', properties: { id: { type: 'string' } } };
-      axiosRequestStub.resolves({ data, status: 200 });
+      const stubClient: SchemaDiscoveryHttpClient = (config) => {
+        expect(String(config.url)).to.include('/users/schema');
+        return Promise.resolve({ data, status: 200 });
+      };
 
-      const result = await fetchRemoteSchema('https://api.example.com', 'users');
+      const result = await fetchRemoteSchema('https://api.example.com', 'users', {}, stubClient);
       expect(result).to.deep.equal(data);
-      expect(axiosRequestStub.calledOnce).to.be.true;
-      const callUrl = axiosRequestStub.firstCall.args[0]?.url ?? axiosRequestStub.firstCall.args[0];
-      expect(String(callUrl)).to.include('/users/schema');
     });
 
     it('returns null when endpoint returns 404', async function () {
-      axiosRequestStub.rejects({ response: { status: 404 } });
+      const stubClient: SchemaDiscoveryHttpClient = () => Promise.reject({ response: { status: 404 } });
 
-      const result = await fetchRemoteSchema('https://api.example.com', 'users');
+      const result = await fetchRemoteSchema('https://api.example.com', 'users', {}, stubClient);
       expect(result).to.equal(null);
     });
 
     it('returns null when response is not 2xx', async function () {
-      axiosRequestStub.rejects({ response: { status: 500 } });
+      const stubClient: SchemaDiscoveryHttpClient = () => Promise.reject({ response: { status: 500 } });
 
-      const result = await fetchRemoteSchema('https://api.example.com', 'users');
+      const result = await fetchRemoteSchema('https://api.example.com', 'users', {}, stubClient);
       expect(result).to.equal(null);
     });
 
     it('returns null on network error', async function () {
-      axiosRequestStub.rejects(new Error('Network error'));
+      const stubClient: SchemaDiscoveryHttpClient = () => Promise.reject(new Error('Network error'));
 
-      const result = await fetchRemoteSchema('https://api.example.com', 'users');
+      const result = await fetchRemoteSchema('https://api.example.com', 'users', {}, stubClient);
       expect(result).to.equal(null);
     });
   });
@@ -149,14 +138,14 @@ describe('Schema Discovery Service', function () {
         },
         required: ['id']
       };
-      axiosRequestStub.resolves({ data: remoteSchema, status: 200 });
+      const stubClient: SchemaDiscoveryHttpClient = () => Promise.resolve({ data: remoteSchema, status: 200 });
 
       const model = {
         _baseurl: 'https://api.example.com',
         _endpoint: 'users',
         _schema: { options: { description: 'User model', mcpDescription: 'Users from API' } }
       };
-      const result = await discoverSchemaForApiModel(model, 'Users');
+      const result = await discoverSchemaForApiModel(model, 'Users', stubClient);
       expect(result).to.not.equal(null);
       expect(result!.name).to.equal('Users');
       expect(result!.fields).to.have.lengthOf(2);
@@ -165,25 +154,26 @@ describe('Schema Discovery Service', function () {
     });
 
     it('returns null when remote schema fails so controller can fall back', async function () {
-      axiosRequestStub.rejects(new Error('Network error'));
+      const stubClient: SchemaDiscoveryHttpClient = () => Promise.reject(new Error('Network error'));
 
       const model = {
         _baseurl: 'https://api.example.com',
         _endpoint: 'users',
         _schema: { paths: { id: { type: String } }, options: {} }
       };
-      const result = await discoverSchemaForApiModel(model, 'Users');
+      const result = await discoverSchemaForApiModel(model, 'Users', stubClient);
       expect(result).to.equal(null);
     });
 
     it('returns null when remote returns empty properties', async function () {
-      axiosRequestStub.resolves({ data: { type: 'object', properties: {} }, status: 200 });
+      const stubClient: SchemaDiscoveryHttpClient = () =>
+        Promise.resolve({ data: { type: 'object', properties: {} }, status: 200 });
 
       const model = {
         _baseurl: 'https://api.example.com',
         _endpoint: 'users'
       };
-      const result = await discoverSchemaForApiModel(model, 'Users');
+      const result = await discoverSchemaForApiModel(model, 'Users', stubClient);
       expect(result).to.equal(null);
     });
   });

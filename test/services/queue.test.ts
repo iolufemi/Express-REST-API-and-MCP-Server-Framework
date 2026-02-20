@@ -2,7 +2,6 @@ import chai from 'chai';
 chai.should();
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
-import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 import fnv from 'fnv-plus';
@@ -13,16 +12,19 @@ import queue, { getQueue } from '../../src/services/queue/index.js';
 import jobs from '../../src/services/queue/jobs.js';
 import '../../src/services/queue/workers.js';
 
+let testServerPort = 8081;
+
 describe('#Queue service', function () {
   before(function (done) {
     const app = express();
-    app.all('/', function (req: any, res: any, next: any) {
+    app.all('/', function (_req: unknown, res: { json: (body: object) => void }) {
       res.json({ status: 'ok' });
     });
-    const server = app.listen(8081, function () {
-      const host = server.address().address;
-      const port = server.address().port;
-      console.log('API server listening on host ' + host + ', port ' + port + '!');
+    const server = app.listen(0, function () {
+      const addr = server.address();
+      const port = addr && typeof addr !== 'string' ? addr.port : 8081;
+      testServerPort = port;
+      console.log('API server listening on port ' + testServerPort + '!');
       done();
     });
   });
@@ -118,7 +120,7 @@ describe('#Queue service', function () {
 
     it('should run sendHTTPRequest successfully for calling web services with POST method', function (done) {
       const data = {
-        url: 'http://localhost:8081',
+        url: 'http://localhost:' + testServerPort,
         method: 'POST',
         headers: { 'User-Agent': 'Femi' },
         data: { someData: 'this', someOtherData: 'and this' }
@@ -128,7 +130,7 @@ describe('#Queue service', function () {
 
     it('should run sendHTTPRequest successfully for calling web services with GET method', function (done) {
       const data = {
-        url: 'http://localhost:8081',
+        url: 'http://localhost:' + testServerPort,
         method: 'GET',
         headers: { 'User-Agent': 'Femi' },
         data: { someData: 'this', someOtherData: 'and this' }
@@ -138,7 +140,7 @@ describe('#Queue service', function () {
 
     it('should run sendHTTPRequest successfully for calling web services with PUT method', function (done) {
       const data = {
-        url: 'http://localhost:8081',
+        url: 'http://localhost:' + testServerPort,
         method: 'PUT',
         headers: { 'User-Agent': 'Femi' },
         data: { someData: 'this', someOtherData: 'and this' }
@@ -148,7 +150,7 @@ describe('#Queue service', function () {
 
     it('should run sendHTTPRequest successfully for calling web services with DELETE method', function (done) {
       const data = {
-        url: 'http://localhost:8081',
+        url: 'http://localhost:' + testServerPort,
         method: 'DELETE',
         headers: { 'User-Agent': 'Femi' },
         data: { someData: 'this', someOtherData: 'and this' }
@@ -158,15 +160,12 @@ describe('#Queue service', function () {
 
     it('should run sendHTTPRequest successfully for calling web services with PATCH method', function (done) {
       const data = {
-        url: 'http://localhost:8081',
+        url: 'http://localhost:' + testServerPort,
         method: 'PATCH',
         headers: { 'User-Agent': 'Femi' },
         data: { someData: 'this', someOtherData: 'and this' }
       };
-      jobs.sendHTTPRequest(data as any, function (err: any, data: any) {
-        if (err) done(err);
-        else done();
-      });
+      jobs.sendHTTPRequest(data as any).then(() => done()).catch(done);
     });
   });
 });

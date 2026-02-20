@@ -3,8 +3,7 @@
  */
 
 import { expect } from 'chai';
-import type { Request, Response, NextFunction } from 'express';
-import type { MockResponse } from './types';
+import type { NextFunction } from 'express';
 
 /**
  * Create a mock Express request object

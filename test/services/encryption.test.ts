@@ -22,10 +22,10 @@ const next = function () {
   }
   return nextChecker;
 };
-res.json = function (data: any) {
+res.json = function (_data: unknown) {
   return res;
 };
-res.status = function (status: number) {
+res.status = function (_status: number) {
   return res;
 };
 const header: any = {};
@@ -52,7 +52,10 @@ describe('#Encryption service test', function () {
   });
 
   it('should generate key', function (done) {
-    encryption.generateKey().should.eventually.be.a('string').notify(done);
+    encryption.generateKey().then((key: string) => {
+      chai.expect(key).to.be.a('string');
+      done();
+    }).catch(done);
   });
 
   it('should encrypt and decrypt data', function (done) {

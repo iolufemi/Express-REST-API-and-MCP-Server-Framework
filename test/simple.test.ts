@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* @ts-nocheck - minimal smoke test */
 import { expect } from 'chai';
 
 describe('Simple Test', function() {
