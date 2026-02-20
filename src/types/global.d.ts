@@ -52,12 +52,6 @@ declare module 'lodash' {
   export = _;
 }
 
-declare module 'express-limiter' {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped package
-  const limiter: any;
-  export default limiter;
-}
-
 declare module 'hpp' {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- untyped package
   const hpp: any;
@@ -73,24 +67,6 @@ declare module 'express-content-length-validator' {
 declare module 'fnv-plus' {
   const fnv: { hash: (input: string | number, bits?: number) => { str: () => string } };
   export default fnv;
-}
-
-declare module 'cacheman' {
-  class Cacheman {
-    constructor(name: string, options?: Record<string, unknown>);
-    get(key: string | string[]): Promise<unknown>;
-    set(key: string | string[], value: unknown, ttl?: number): Promise<unknown>;
-    del(key: string | string[]): Promise<unknown>;
-    clear(): Promise<unknown>;
-  }
-  export = Cacheman;
-}
-
-declare module 'cacheman-redis' {
-  class EngineRedis {
-    constructor(options?: Record<string, unknown>);
-  }
-  export = EngineRedis;
 }
 
 declare module 'shortid' {

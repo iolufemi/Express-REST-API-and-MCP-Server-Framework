@@ -8,7 +8,8 @@ import me from '../../package.json';
 import initialize from './initialize.js';
 import config from '../config/index.js';
 import helmet from 'helmet';
-import limiter from 'express-limiter';
+import { rateLimit } from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
 import _ from 'lodash';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -16,8 +17,7 @@ import hpp from 'hpp';
 import contentLength from 'express-content-length-validator';
 import url from 'url';
 import fnv from 'fnv-plus';
-import Cacheman from 'cacheman';
-import EngineRedis from 'cacheman-redis';
+import RedisCache from '../services/cache/redis-cache.js';
 import queue from '../services/queue/index.js';
 import fs from 'fs';
 import shortId from 'shortid';
@@ -28,6 +28,8 @@ import mcp from './mcp.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MAX_CONTENT_LENGTH_ACCEPTED = parseInt(config.maxContentLength || '9999', 10);
+/** Max wait for Redis in middleware (cache get / rate limit); after this we call next() to avoid blocking. */
+const REDIS_MIDDLEWARE_TIMEOUT_MS = 5000;
 
 /**
  * Create and configure the router. Uses dynamic import() for optional Redis so we stay ESM-only.
@@ -44,7 +46,13 @@ async function createRouter(): Promise<Router> {
     log.warn('Redis client not available, rate limiting may not work');
   }
 
-  const rateLimiter = redisClient ? limiter(router, redisClient as Parameters<typeof limiter>[1]) : null;
+  type RedisV4Client = {
+    get(key: string): Promise<string | null>;
+    set(key: string, value: string, options?: { PX?: number }): Promise<unknown>;
+    del(key: string): Promise<number>;
+    sendCommand(args: string[]): Promise<unknown>;
+  };
+  const redis = redisClient as RedisV4Client | null;
 
   // Load routes. Comes with versioning. unversioned routes should be named like 'user.ts'
   // versioned files or routes should be named as user.v1.ts.
@@ -155,16 +163,13 @@ async function createRouter(): Promise<Router> {
   };
   
   (router as RouterWithLoadRoutes)._APICache = function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): void {
-    // Only use Redis cache if available
-    if (!redisClient) {
+    if (!redis) {
       log.warn('Redis not available, caching disabled');
       next();
       return;
     }
-    
-    const cache = new EngineRedis({ client: redisClient } as ConstructorParameters<typeof EngineRedis>[0]);
-    const APICache = new Cacheman(me.name, { engine: cache, ttl: parseInt(config.backendCacheExpiry || '90', 10) });
-    req.cache = APICache;
+    const ttlSeconds = parseInt(config.backendCacheExpiry || '90', 10);
+    req.cache = new RedisCache({ client: redis, prefix: me.name, ttlSeconds });
     // Tell Frontend to Cache responses
     res.set({ 'Cache-Control': 'private, max-age=' + config.frontendCacheExpiry + '' });
   
@@ -179,11 +184,13 @@ async function createRouter(): Promise<Router> {
     // Remember to delete cache when you get a POST call
     // Only cache GET calls
     if (req.method === 'GET') {
-      //  if record is not in cache, set cache else get cache
-      req.cache.get(req.cacheKey)
+      const cacheGetWithTimeout = Promise.race([
+        req.cache.get(req.cacheKey),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), REDIS_MIDDLEWARE_TIMEOUT_MS))
+      ]);
+      cacheGetWithTimeout
         .then((resp: unknown) => {
           if (!resp) {
-            // Will be set on successful response
             next();
           } else {
             res.ok?.(resp, true);
@@ -191,7 +198,6 @@ async function createRouter(): Promise<Router> {
         })
         .catch((err: Error) => {
           log.error('Failed to get cached data: ', err);
-          // Don't block the call because of this failure.
           next();
         });
     } else {
@@ -233,11 +239,11 @@ async function createRouter(): Promise<Router> {
       createdAt: new Date()
     };
   
-    // Dump it in the queue
+    // Dump it in the queue (fire-and-forget; do not await so request continues immediately)
     queue.create('logRequest', reqLog)
-      .save();
-  
-    // persist RequestLog entry in the background; continue immediately
+      .save()
+      .catch((err: unknown) => log.error('Request log queue save failed:', err));
+
     log.info(reqLog);
     next();
   });
@@ -251,17 +257,44 @@ async function createRouter(): Promise<Router> {
   // add the param function to request object
   router.use((router as RouterWithLoadRoutes)._allRequestData);
   
-  // API Rate limiter (only if Redis is available)
-  if (rateLimiter) {
-    rateLimiter({
-      path: '*',
-      method: 'all',
-      lookup: ['ip', 'accountId', 'appId', 'developer'],
-      total: parseInt(config.rateLimit || '1800', 10),
-      expire: parseInt(config.rateLimitExpiry || '3600000', 10),
-      onRateLimited: function (_req: ExpressRequest, _res: ExpressResponse, next: ExpressNext) {
-        next({ message: 'Rate limit exceeded', statusCode: 429 });
-      }
+  // API Rate limiter (express-rate-limit + rate-limit-redis, works with node-redis v4)
+  if (redis) {
+    const limiterMiddleware = rateLimit({
+      windowMs: parseInt(config.rateLimitExpiry || '3600000', 10),
+      limit: parseInt(config.rateLimit || '1800', 10),
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req: ExpressRequest) => {
+        const parts = [
+          req.ip ?? '',
+          (req as any).accountId ?? '',
+          (req as any).appId ?? '',
+          (req as any).developer ?? ''
+        ];
+        return parts.join(':');
+      },
+      handler: (_req: ExpressRequest, res: ExpressResponse, _next: ExpressNext, options: { message: string; statusCode: number }) => {
+        res.status(options.statusCode).json({ message: options.message || 'Rate limit exceeded' });
+      },
+      store: new RedisStore({
+        sendCommand: (...args: string[]) => redis.sendCommand(args) as Promise<boolean | number | string | (boolean | number | string)[]>
+      })
+    });
+    router.use((req: ExpressRequest, res: ExpressResponse, next: ExpressNext) => {
+      let nextCalled = false;
+      const safeNext = (err?: unknown) => {
+        if (nextCalled) return;
+        nextCalled = true;
+        next(err);
+      };
+      const timeoutId = setTimeout(() => {
+        log.warn('Rate limiter did not respond in time; allowing request');
+        safeNext();
+      }, REDIS_MIDDLEWARE_TIMEOUT_MS);
+      limiterMiddleware(req, res, (err: unknown) => {
+        clearTimeout(timeoutId);
+        safeNext(err);
+      });
     });
   } else {
     log.warn('Rate limiting disabled - Redis not available');
