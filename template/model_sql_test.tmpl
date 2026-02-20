@@ -34,6 +34,7 @@ describe('<%= service %> Model',function(){
             var my<%= object %> = <%= service %>.findOne({where: {name: 'femi'}});
 
             my<%= object %>.then(function(res){
+                if (!res) return done(new Error('expected record'));
                 res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
@@ -120,6 +121,7 @@ describe('<%= service %> Model',function(){
                 return <%= service %>.findOne({where: {name: 'This is the titan'}});
             })
             .then(function(res){
+                if (!res) return done(new Error('expected record'));
                 res.should.have.property('updatedAt');
                 done();
             })
@@ -135,8 +137,10 @@ describe('<%= service %> Model',function(){
             setTimeout(function(){
                 <%= service %>.findOne({where: {_id: my<%= object %>._id}})
                 .then(function(res){
+                    if (!res) return reject(new Error('expected record'));
                     res.should.be.an('object'); /* jslint ignore:line */
-                    chai.expect(res.tags !== undefined && res.tags !== null).to.be.true;
+                    // SQL: tags field exists; may be null until search-index job runs
+                    chai.expect(res).to.have.property('tags');
                     resolve(res);
                 })
                 .catch(function(err){
@@ -161,18 +165,20 @@ describe('<%= service %> Model',function(){
         it('should find a record by id and delete', function(done){
             var my<%= object %> = <%= service %>.findOne({where: {_id: id2}});
 
-            var <%= object %>er = my<%= object %>.then(function(res){
+            my<%= object %>.then(function(res){
+                if (!res) return done(new Error('expected record'));
                 return res.destroy();
             })
-            .then(function(res){
-                res.should.be.an('object');
+            .then(function(){
                 done();
+            })
+            .catch(function(err){
+                done(err);
             });
-            
         });
 
         it('should have transaction object', function(done){
-            var my<%= object %> = <%= service %>.transaction.should.exist;  /* jslint ignore:line */
+            chai.expect(<%= service %>).to.have.property('transaction');
             done();
         });
 

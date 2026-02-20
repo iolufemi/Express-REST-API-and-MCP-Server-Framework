@@ -15,6 +15,7 @@
     "test:simple": "node test/run.mjs --no-config --node-option import=tsx --node-option import=test/setup.ts test/simple.test.ts --reporter spec --timeout 20000",
     "lint": "npx eslint src/**/*.ts",
     "type-check": "npx tsc --noEmit",
+    "type-check:test": "npx tsc -p tsconfig.test.json --noEmit",
     "clock": "npx tsx src/services/queue/clock.ts",
     "workers": "npx tsx src/services/queue/workers.ts",
     "gulp": "npx gulp --gulpfile gulpfile.cjs",

@@ -113,7 +113,7 @@ const <%= service %>s = db.sql.define(table, schemaObject, {
     (ourDoc as any).model = table;
 
     // Dump it in the queue
-    queue.create('searchIndex', ourDoc)
+    queue.create('searchIndex', ourDoc as Record<string, unknown>)
     .save();
 });
 

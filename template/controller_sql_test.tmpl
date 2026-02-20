@@ -3,7 +3,11 @@ chai.should();
 const { expect } = chai;
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
+import { ExpressRequest, ExpressResponse, ExpressNext } from '../../src/types/express.js';
 import <%= object %>s from '../../src/controllers/<%= service %>s.js';
+
+type MockReq = Record<string, unknown> & { query?: Record<string, unknown>; body?: unknown; params?: Record<string, unknown> };
+type MockRes = Record<string, unknown>;
 import '../../src/services/queue/workers.js';
 import _ from 'lodash';
 import modelsPromise from '../../src/models/index.js';
@@ -22,16 +26,16 @@ describe('<%= service %>s controller', function(){
     });
 
     it('should create documents', function(done){
-        var next = function(err){
-            done(err);
+        var next = function(err: unknown){
+            done(err as Error);
         };
-        var res = {};
-        res.ok = function(data){
+        var res: MockRes = {};
+        res.ok = function(data: unknown){
             data.should.be.an('array'); /* jslint ignore:line */
             <%= object %>Id2 = data[0]._id;
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.body = [{
             name: 'Femi',
             someOtherStringData: 'this is pizza'
@@ -56,27 +60,26 @@ describe('<%= service %>s controller', function(){
             name: 'Bayo22',
             someOtherStringData: 'Meta'
         }];
-        <%= object %>s.create(req, res, next);
+        <%= object %>s.create(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
 
     it('should create a document', function(done){
-        var next = function(err){
-            done(err);
+        var next = function(err: unknown){
+            done(err as Error);
         };
-        var res = {};
-        res.ok = function(data, cache, extraData){
-
-            data.should.be.an('object'); /* jslint ignore:line */
-            <%= object %>Id = data._id;
+        var res: MockRes = {};
+        res.ok = function(data: unknown, _cache?: boolean, _extraData?: unknown){
+            (data as { _id: number }).should.be.an('object'); /* jslint ignore:line */
+            <%= object %>Id = (data as { _id: number })._id;
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.body = {
             name: 'Femi Olanipekun',
             someOtherStringData: 'FooFoo Tahh',
             toPop: <%= object %>Id2
         };
-        <%= object %>s.create(req, res, next);
+        <%= object %>s.create(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
 
     it('should build projection', function(done){
@@ -91,22 +94,22 @@ describe('<%= service %>s controller', function(){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
 
             data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
         req.query.search = 'i like pizza';
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
     it('should limit the number of returned documents and check if it is the last page', function(done){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
             data.should.be.an('array'); /* jslint ignore:line */
             extraData.isLastPage.should.exist; /* jslint ignore:line */
@@ -114,17 +117,17 @@ describe('<%= service %>s controller', function(){
             done();
 
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
         req.query.limit = 2;
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
     it('should contain count of total record for the query', function(done){
 
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
 
             data.should.be.an('array'); /* jslint ignore:line */
@@ -132,61 +135,61 @@ describe('<%= service %>s controller', function(){
             extraData.totalResult.should.be.a('number'); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
     it('should return the last document Id in the array of documents returned from a query', function(done){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
             lastId = extraData.lastId;
             data.should.be.an('array'); /* jslint ignore:line */
             (typeof extraData.lastId === 'string' ? extraData.lastId : String(extraData.lastId)).should.be.a('string'); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = { limit: 2, sort: '_id' };
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
 
     it('should sort documents in ascending order', function(done){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
 
             data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
         req.query.sort = 'name';
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
     it('should sort documents in descending order', function(done){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
 
             data.should.be.an('array'); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
         req.query.sort = '-name';
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
     it('should select just few parameters from the documents', function(done){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
 
             data.should.be.an('array'); /* jslint ignore:line */
@@ -194,48 +197,48 @@ describe('<%= service %>s controller', function(){
             expect(data[0].someOtherStringData).to.be.undefined;  /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {};
         req.query.select = 'name';
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     });
 
 // it('should populate data of a references', function(done){
 //     var next = function(err){
 //         done(err);
 //     };
-//     var res = {};
+//     var res: MockRes = {};
 //     res.ok = function(data, cache, extraData){
         
 //         data[0].toPop.should.be.an.object; /* jslint ignore:line */
 //         done();
 //     };
-//     var req = {};
+//     var req: MockReq = {};
     
 //     req.query = {_id: <%= object %>Id};
 //     req.query.populate = 'toPop';
-//     <%= object %>s.find(req, res, next);
+//     <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 // });
 
 it('should load next page for pagination', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data){
         var next = function(err){
             done(err);
         };
-        var res = {};
+        var res: MockRes = {};
         res.ok = function(data, cache, extraData){
             data.length.should.be.above(0); /* jslint ignore:line */
             done();
         };
-        var req = {};
+        var req: MockReq = {};
         req.query = {lastId: lastId.toString()};
-        <%= object %>s.find(req, res, next);
+        <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
     };
-    var req = {};
+    var req: MockReq = {};
     req.body = [{
         name: 'Femi2',
         someOtherStringData: 'this is pizza'
@@ -248,43 +251,43 @@ it('should load next page for pagination', function(done){
         name: 'Bayo2',
         someOtherStringData: 'Meta'
     }];
-    <%= object %>s.create(req, res, next);    
+    <%= object %>s.create(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);    
 });
 
 it('should filter by date range', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
 
         data.should.be.an('array'); /* jslint ignore:line */
         data.length.should.be.above(0); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.query = {};
     req.query.from = from;
     
     req.query.to = new Date().toISOString();
-    <%= object %>s.find(req, res, next);
+    <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 
 it('should filter by date range without setting the end date', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
 
         data.should.be.an('array'); /* jslint ignore:line */
         data.length.should.be.above(0); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.query = {};
     req.query.from = from;
-    <%= object %>s.find(req, res, next);
+    <%= object %>s.find(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 
 
@@ -292,52 +295,52 @@ it('should find one document', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
         data.should.be.an('object'); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.params = {};
     req.params.id = <%= object %>Id;
-    <%= object %>s.findOne(req, res, next);
+    <%= object %>s.findOne(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 it('should update documents', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
         data.should.exist; /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.query = {name: 'Femi'};
     req.body = {name: 'Femi Updated'};
-    <%= object %>s.update(req, res, next);
+    <%= object %>s.update(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 it('should update a document', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
 
         data.should.exist; /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.params = {};
     req.params.id = <%= object %>Id;
     req.body = {name: 'Mr Fufuf'};
-    <%= object %>s.updateOne(req, res, next);
+    <%= object %>s.updateOne(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 it('should delete multiple data', function(done){
 
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
         forDelete = _.map(data,function(value){
             return value._id;
@@ -346,10 +349,10 @@ it('should delete multiple data', function(done){
         data.length.should.be.above(0); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     // Use a query that matches multiple records (SQL; ensures at least one match)
     req.query = { name: 'Bayo' };
-    <%= object %>s.delete(req, res, next);
+    <%= object %>s.delete(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 it('should have backed up multiple deleted data', function(done){
     setTimeout(function(){
@@ -369,15 +372,15 @@ it('should delete one data', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
         data.should.be.an('object'); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     // Use single-created doc so we delete a record that still exists after delete multiple by name
     req.params = {id: <%= object %>Id};
-    <%= object %>s.deleteOne(req, res, next);
+    <%= object %>s.deleteOne(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 it('should have backed up one data', function(done){
     setTimeout(function(){
@@ -397,13 +400,13 @@ it('should restore a previously deleted data', function(done){
     var next = function(err){
         done(err);
     };
-    var res = {};
+    var res: MockRes = {};
     res.ok = function(data, cache, extraData){
         data.should.be.an('object'); /* jslint ignore:line */
         done();
     };
-    var req = {};
+    var req: MockReq = {};
     req.params = {id: trashId};
-    <%= object %>s.restore(req, res, next);
+    <%= object %>s.restore(req as unknown as ExpressRequest, res as unknown as ExpressResponse, next as unknown as ExpressNext);
 });
 });

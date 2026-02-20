@@ -44,7 +44,7 @@ const <%= service %>sController: <%= service %>sControllerType = {
    */
   find: async function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): Promise<void> {
     try {
-      const { Model } = await getModels();
+      const { Model, models } = await getModels();
       let query: any = {};
       
       if (req.query.search) {
@@ -210,7 +210,6 @@ const <%= service %>sController: <%= service %>sControllerType = {
           };
           res.ok?.(JSON.parse(JSON.stringify(resp)), false, extraData);
         }
-      }
     } catch (err: any) {
       next(err);
     }

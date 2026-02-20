@@ -322,7 +322,7 @@ describe('Restore', function(){
             const Trash = models.Trash;
             const tid = oneId.toString();
             setTimeout(function(){
-                Trash.findOne({'data._id': tid})
+                (Trash as { findOne: (q: object) => Promise<{ _id: string } | null> }).findOne({'data._id': tid})
                 .then(function(resp){
                     return agent
                     .post('/<%= object %>s/'+resp._id+'/restore')

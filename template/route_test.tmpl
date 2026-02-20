@@ -27,10 +27,11 @@ before(async function () {
   agent = request.agent(app);
 });
 
-const res = {};
-const req = {};
+const header: Record<string, unknown> = {};
+const res: Record<string, unknown> = {};
+const req: Record<string, unknown> = {};
 let nextChecker = false;
-const _next = function(){
+const _next = function(): boolean{
     if(arguments.length > 0){
         console.log(arguments[0]);
     }else{
@@ -38,25 +39,12 @@ const _next = function(){
     }
     return nextChecker;
 };
-res.json = function(_data){
-    return res;
-};
+res.json = function(_data: unknown){ return res; };
 res.badRequest = sinon.spy();
-res.status = function(_status){
-    return res;
-};
-const header = {};
-res.set = function(key, value){
-    header[key] = value;
-    return header[key];
-};
-req.get = function(key){
-    return header[key];
-};
-header.set = function(data){
-    header.temp = data;
-    return header.temp;
-};
+res.status = function(_status: unknown){ return res; };
+res.set = function(key: string, value: unknown){ header[key] = value; return value; };
+req.get = function(key: string){ return header[key]; };
+header.set = function(data: unknown){ header.temp = data; return data; };
 req.method = '';
 
 let tag;
@@ -313,7 +301,7 @@ describe('Restore', function(){
             const Trash = models.Trash;
             const tid = oneId.toString();
             setTimeout(function(){
-                Trash.findOne({'data._id': tid})
+                (Trash as { findOne: (q: object) => Promise<{ _id: string } | null> }).findOne({'data._id': tid})
                 .then(function(resp){
                     return agent
                     .post('/<%= object %>s/'+resp._id+'/restore')

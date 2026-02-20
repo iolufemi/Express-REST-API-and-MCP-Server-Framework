@@ -1,5 +1,6 @@
 /// <reference types="mocha" />
 /// <reference types="node" />
+/// <reference path="./chai-augment.d.ts" />
 
 declare global {
   var __filename: string;
