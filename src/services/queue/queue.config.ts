@@ -2,7 +2,7 @@ import config from '../../config/index.js';
 import { QueueConfig } from '../../types/queue.js';
 
 export const queueConfig: QueueConfig = {
-  redis: config.redisURL,
+  redis: config.redisQueueURL,
   defaultJobOptions: {
     attempts: 3,
     backoff: {

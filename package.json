@@ -10,7 +10,7 @@
     "start": "node dist/app.js",
     "test": "node test/run.mjs",
     "test:watch": "node test/run.mjs --watch",
-    "test:coverage": "npx c8 --reporter=text --reporter=text-summary --reporter=html --reporter=lcov npx mocha --exit",
+    "test:coverage": "node scripts/run-coverage-with-timeout.mjs",
     "test:save": "npm test 2>&1 | tee test-results.txt",
     "test:simple": "node test/run.mjs --no-config --node-option import=tsx --node-option import=test/setup.ts test/simple.test.ts --reporter spec --timeout 20000",
     "lint": "npx eslint src/**/*.ts",

@@ -96,14 +96,14 @@ services:
 
     # Redis
     redis:
-        image: redis
+        image: redis:latest
         restart: always
         ports:
             - "6379:6379"
 
     # Mongo
     mongo:
-        image: mongo:6.0
+        image: mongo:latest
         restart: always
         ports:
             - "27017:27017"

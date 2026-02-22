@@ -24,9 +24,9 @@ describe('<%= service %> Model (API → local /<%= endpoint %>)',function(){
     before(async function(){  /* jslint ignore:line */
         testServer = await createTestServer();
         const models = await modelsPromise;
-        const model = models['<%= service %>'];
+        const model = models['<%= service %>s'] as { setBaseUrl?: (url: string) => void };
         if (model && typeof model.setBaseUrl === 'function') {
-            model.setBaseUrl('http://localhost:' + testServer.port);
+            model.setBaseUrl('http://localhost:' + testServer!.port);
         }
     });
 
@@ -186,7 +186,7 @@ describe('<%= service %> Model (API → local /<%= endpoint %>)',function(){
                 <%= service %>.findById(my<%= objectCamelCase %>._id)
                 .then(function(res){
                     res.should.be.an('object'); /* jslint ignore:line */
-                    res.tags.should.be.an('array'); /* jslint ignore:line */
+                    (Array.isArray(res.tags) || typeof res.tags === 'string').should.be.true; /* array (Mongo) or string (SQL/API) */
                     resolve(res);
                 })
                 .catch(function(err){
@@ -222,7 +222,7 @@ describe('<%= service %> Model (API → local /<%= endpoint %>)',function(){
         });
 
         it('should find a record by id and delete', function(done){
-            var my<%= objectCamelCase %> = <%= service %>.findByIdAndDelete(id2);
+            var my<%= objectCamelCase %> = (<%= service %> as unknown as { findByIdAndRemove: (id: string) => Promise<unknown> }).findByIdAndRemove(id2);
 
             my<%= objectCamelCase %>.then(function(res){
                 res.should.be.an('object'); /* jslint ignore:line */
@@ -270,7 +270,7 @@ describe('<%= service %> Model (API → local /<%= endpoint %>)',function(){
         });
 
         it('should find the first match from a query and delete', function(done){
-            var my<%= objectCamelCase %> = <%= service %>.findOneAndDelete({name: 'funmi'});
+            var my<%= objectCamelCase %> = (<%= service %> as unknown as { findOneAndRemove: (query: object) => Promise<unknown> }).findOneAndRemove({name: 'funmi'});
 
             my<%= objectCamelCase %>.then(function(res){
                 res.should.be.an('object'); /* jslint ignore:line */

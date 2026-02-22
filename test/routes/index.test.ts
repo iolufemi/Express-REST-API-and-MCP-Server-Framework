@@ -142,10 +142,10 @@ describe('Cache Test', function () {
       chai.expect(req.cache, 'req.cache should be set when Redis is available').to.be.ok;
       req.cache.should.be.an('object');
       req.cacheKey.should.be.an('array');
-chai.expect((res.set as sinon.SinonSpy).calledOnce).to.be.true;
-        chai.expect((res.set as sinon.SinonSpy).calledWith({
-          'Cache-Control': 'private, max-age=' + config.frontendCacheExpiry + ''
-        })).to.be.true;
+      chai.expect((res.set as sinon.SinonSpy).calledOnce).to.be.true;
+      chai.expect((res.set as sinon.SinonSpy).calledWith({
+        'Cache-Control': 'private, max-age=' + config.frontendCacheExpiry + ''
+      })).to.be.true;
       done();
     };
     try {

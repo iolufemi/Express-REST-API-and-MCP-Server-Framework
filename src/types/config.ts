@@ -17,6 +17,8 @@ export interface Config {
   rateLimit: string;
   rateLimitExpiry: string;
   redisURL: string;
+  /** Redis URL for Bull queue (default DB 2). Separate from cache to avoid blocking. */
+  redisQueueURL: string;
   letsencryptSSLVerificationURL: string;
   letsencryptSSLVerificationBody: string;
   maxContentLength: string;

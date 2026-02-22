@@ -18,6 +18,7 @@ const config: Config = {
   rateLimit: env.RATE_LIMIT,
   rateLimitExpiry: env.RATE_LIMIT_EXPIRY,
   redisURL: isProduction ? 'redis://192.168.99.100:6379/1' : env.REDIS_URL,
+  redisQueueURL: isProduction ? 'redis://192.168.99.100:6379/2' : env.REDIS_QUEUE_URL,
   letsencryptSSLVerificationURL: env.LETSENCRYPT_VERIFICATION_URL,
   letsencryptSSLVerificationBody: env.LETSENCRYPT_VERIFICATION_BODY,
   maxContentLength: env.MAX_CONTENT_LENGTH,

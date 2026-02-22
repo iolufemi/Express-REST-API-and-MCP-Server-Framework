@@ -70,14 +70,18 @@ class ApiModel implements Thenable<any> {
 
   private async call(data: ApiModelData): Promise<any> {
     debugLog('Sending HTTP ' + data.method + ' request to ' + data.url + ' with data => ' + JSON.stringify(data.data) + ' and headers => ' + JSON.stringify(this.headers) + ' all the data => ' + JSON.stringify(data));
-    
+    // Yield so the same server can accept the connection when we request to ourselves (e.g. in tests).
+    await new Promise<void>((resolve) => setImmediate(resolve));
+
     const tag = config.apiDBKey;
     this.headers['x-tag'] = tag;
-    
+
+    const timeoutMs = 20000;
     const options: AxiosRequestConfig = {
       method: data.method,
       url: data.url,
-      headers: this.headers
+      headers: this.headers,
+      timeout: timeoutMs
     };
 
     if (data.method === 'GET') {
@@ -194,14 +198,14 @@ class ApiModel implements Thenable<any> {
       delete query._id.$gt;
     }
 
-    this.query = {};
-    this.query = _.extend(this.query, query);
+    // Preserve limit, sort, select, populate from chain; merge in filter query
+    this.query = _.extend({}, this.query, query);
     const data: ApiModelData = {
       url: this.url,
       method: 'GET',
       qs: this.query
     };
-    
+
     const obj = this;
     return {
       then: async function (cb: (value: any) => any): Promise<any> {
@@ -268,7 +272,11 @@ class ApiModel implements Thenable<any> {
     }
     const resp = await this.findOne(this.query).then((r: any) => r);
     debugLog('to update: ', resp);
-    return this.findByIdAndUpdate(resp._id, this.data);
+    if (!resp || (resp._id === undefined && resp.id === undefined)) {
+      throw { statusCode: 404, message: 'No document found' };
+    }
+    const id = resp._id !== undefined ? resp._id : resp.id;
+    return this.findByIdAndUpdate(id, this.data);
   }
 
   async findOneAndRemove(query: any): Promise<any> {
@@ -279,19 +287,18 @@ class ApiModel implements Thenable<any> {
     this.query = _.extend(this.query, query);
     const resp = await this.findOne(this.query).then((r: any) => r);
     debugLog('to remove: ', resp);
-    return this.findByIdAndRemove(resp._id);
+    if (!resp || (resp._id === undefined && resp.id === undefined)) {
+      throw { statusCode: 404, message: 'No document found' };
+    }
+    const id = resp._id !== undefined ? resp._id : resp.id;
+    return this.findByIdAndRemove(id);
   }
 
-  findById(id: string): Thenable<any> {
-    if (!id) {
+  findById(id: string | number): Thenable<any> {
+    if (id === undefined || id === null || id === '') {
       throw { statusCode: 400, message: 'Stop! You need to pass an ID' };
     }
-
-    if (typeof id !== 'string') {
-      throw { statusCode: 400, message: 'Stop! ID needs to be a string' };
-    }
-
-    this.id = id;
+    this.id = String(id);
 
     debugLog('the id id id: ', id);
     this.query = {};
@@ -395,7 +402,7 @@ class ApiModel implements Thenable<any> {
     return this.updateMany(query, data);
   }
 
-  findByIdAndUpdate(id: string, data: any): Thenable<any> {
+  findByIdAndUpdate(id: string | number, data: any): Thenable<any> {
     if (!data) {
       throw { statusCode: 400, message: 'Stop! You need to pass data' };
     }
@@ -404,21 +411,16 @@ class ApiModel implements Thenable<any> {
       throw { statusCode: 400, message: 'Stop! Data must be an object' };
     }
 
-    if (!id) {
+    if (id === undefined || id === null || id === '') {
       throw { statusCode: 400, message: 'Stop! You need to pass an ID' };
     }
-
-    if (typeof id !== 'string') {
-      throw { statusCode: 400, message: 'Stop! ID needs to be a string' };
-    }
-
     data.updatedAt = new Date(Date.now()).toISOString();
     this.data = data;
 
     if (this.data && this.data._id && typeof this.data._id !== 'string') {
       this.data._id = this.data._id.toString();
     }
-    this.id = id;
+    this.id = String(id);
 
     debugLog('this is what we are sending: ', this.data);
     const _data: ApiModelData = {
@@ -465,16 +467,11 @@ class ApiModel implements Thenable<any> {
     };
   }
 
-  findByIdAndRemove(id: string): Thenable<any> {
-    if (!id) {
+  findByIdAndRemove(id: string | number): Thenable<any> {
+    if (id === undefined || id === null || id === '') {
       throw { statusCode: 400, message: 'Stop! You need to pass an ID' };
     }
-
-    if (typeof id !== 'string') {
-      throw { statusCode: 400, message: 'Stop! ID needs to be a string' };
-    }
-
-    this.id = id;
+    this.id = String(id);
 
     const _data: ApiModelData = {
       url: this.url + '/' + this.id,
@@ -496,6 +493,11 @@ class ApiModel implements Thenable<any> {
     };
   }
 
+  /** Alias for findByIdAndRemove for compatibility with Mongoose-style controllers */
+  findByIdAndDelete(id: string | number): Thenable<any> {
+    return this.findByIdAndRemove(id);
+  }
+
   async deleteOne(query: any): Promise<any> {
     if (!query) {
       query = {};
@@ -504,7 +506,11 @@ class ApiModel implements Thenable<any> {
     this.query = _.extend(this.query, query);
     const resp = await this.findOne(this.query).then((r: any) => r);
     debugLog('to delete: ', resp);
-    return this.findByIdAndRemove(resp._id);
+    if (!resp || (resp._id === undefined && resp.id === undefined)) {
+      throw { statusCode: 404, message: 'No document found' };
+    }
+    const id = resp._id !== undefined ? resp._id : resp.id;
+    return this.findByIdAndRemove(id);
   }
 
   then<R>(callback: (value: any) => R): Promise<R> {

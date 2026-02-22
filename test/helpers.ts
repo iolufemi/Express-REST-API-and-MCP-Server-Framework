@@ -109,6 +109,33 @@ export function wait(ms: number): Promise<void> {
 }
 
 /**
+ * Wait for a Bull queue to finish processing (waiting + active = 0) or timeout.
+ * Use in tests that depend on queue jobs (e.g. saveToTrash) before asserting.
+ */
+export function waitForQueueDrained(
+  getQueue: (name: string) => { getJobCounts(): Promise<{ waiting: number; active: number }> },
+  queueName: string,
+  timeoutMs: number = 10000
+): Promise<void> {
+  const queue = getQueue(queueName);
+  const start = Date.now();
+  return new Promise((resolve, reject) => {
+    function check() {
+      queue.getJobCounts().then((counts) => {
+        if (counts.waiting === 0 && counts.active === 0) {
+          return resolve();
+        }
+        if (Date.now() - start >= timeoutMs) {
+          return reject(new Error(`Queue ${queueName} did not drain within ${timeoutMs}ms`));
+        }
+        setTimeout(check, 50);
+      }, reject);
+    }
+    check();
+  });
+}
+
+/**
  * Assert that a promise rejects with a specific error
  */
 export async function expectRejection(

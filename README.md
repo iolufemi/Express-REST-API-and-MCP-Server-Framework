@@ -67,7 +67,9 @@ $ npm install
 
 | Command | Description |
 |---------|-------------|
-| `npm run generate -- --name &lt;Name&gt;` | Generate a new CRUD endpoint (route, controller, model, MCP registration, tests). Use `-n` for short. Add `--sql` for SQL models; `--baseurl` and `--endpoint` for API-as-DB. |
+| `npm run generate -- --name &lt;Name&gt;` | Generate a **MongoDB** CRUD endpoint (route, controller, model, MCP registration, tests). Use `-n` for short. |
+| `npm run generate -- --name &lt;Name&gt; --sql` | Generate a **SQL** CRUD endpoint (Sequelize model, SQL controller/routes/tests). |
+| `npm run generate -- --name &lt;Name&gt; --baseurl &lt;URL&gt; --endpoint &lt;path&gt;` | Generate an **API-as-DB** endpoint (proxy to external API). Short: `-n`, `-b`, `-e`. |
 | `npm run dev` | Start development server with hot reload |
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm start` | Run production server |

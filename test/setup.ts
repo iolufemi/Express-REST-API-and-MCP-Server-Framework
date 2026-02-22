@@ -27,3 +27,20 @@ process.env.NO_CACHE = 'no';
 
 // Global test timeout
 process.env.MOCHA_TIMEOUT = '20000';
+
+// Clear Redis (cache + rate limit DB and queue DB) before any test runs
+const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379/1';
+const redisQueueUrl = process.env.REDIS_QUEUE_URL || 'redis://127.0.0.1:6379/2';
+try {
+  const { createClient } = await import('redis');
+  const flushDb = async (url: string): Promise<void> => {
+    const client = createClient({ url });
+    await client.connect();
+    await client.flushDb();
+    await client.quit();
+  };
+  await flushDb(redisUrl);
+  await flushDb(redisQueueUrl);
+} catch (err) {
+  console.warn('Test setup: could not clear Redis (run may still proceed):', err);
+}

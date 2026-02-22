@@ -2,7 +2,7 @@ import express, { Router } from 'express';
 import <%= objectCamelCase %>sController, { type <%= service %>sControllerType } from '../controllers/<%= service %>s.js';
 
 const router: Router = express.Router();
-const service = '<%= object %>s';
+const service = '<%= namePlural %>';
 
 const controller = <%= objectCamelCase %>sController as <%= service %>sControllerType;
 

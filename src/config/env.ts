@@ -29,6 +29,8 @@ export const EnvSchema = z.object({
   RATE_LIMIT: z.string().default('1800'),
   RATE_LIMIT_EXPIRY: z.string().default('3600000'),
   REDIS_URL: z.string().default('redis://127.0.0.1:6379/1'),
+  /** Separate Redis for Bull queue (default DB 2). Use same host with /2 or another instance to avoid cache blocking. */
+  REDIS_QUEUE_URL: z.string().default('redis://127.0.0.1:6379/2'),
   LETSENCRYPT_VERIFICATION_URL: z.string().default('/.well-known/acme-challenge/xvArhQBSilF4V30dGUagNAZ96ASipB0b0ex0kXn0za8'),
   LETSENCRYPT_VERIFICATION_BODY: z.string().default('xvArhQBSilF4V30dGUagNAZ96ASipB0b0ex0kXn0za8._v6aFbaRYWeOmSebtlD-X4Ixf5tPsyULMsXM8HjsK-Q'),
   MAX_CONTENT_LENGTH: z.string().default('9999'),

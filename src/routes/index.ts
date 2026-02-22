@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import response from '../services/response/index.js';
 import encryption from '../services/encryption/index.js';
 import log, { errorHandler } from '../services/logger/index.js';
-import me from '../../package.json';
+import me from '../../package.json' with { type: 'json' };
 import initialize from './initialize.js';
 import config from '../config/index.js';
 import helmet from 'helmet';
@@ -265,11 +265,12 @@ async function createRouter(): Promise<Router> {
       standardHeaders: true,
       legacyHeaders: false,
       keyGenerator: (req: ExpressRequest) => {
+        const r = req as ExpressRequest & { accountId?: string; appId?: string; developer?: string };
         const parts = [
           req.ip ?? '',
-          (req as any).accountId ?? '',
-          (req as any).appId ?? '',
-          (req as any).developer ?? ''
+          r.accountId ?? '',
+          r.appId ?? '',
+          r.developer ?? ''
         ];
         return parts.join(':');
       },
@@ -329,8 +330,8 @@ async function createRouter(): Promise<Router> {
   // Other routes here
   const normalizedPath = path.join(__dirname, './');
   const routeFiles = fs.readdirSync(normalizedPath).filter((file) => {
-    // Only load TypeScript route files
-    return file.endsWith('.ts') || file.endsWith('.js');
+    // Only load route files, exclude declaration and map files (e.g. .d.ts, .d.js)
+    return (file.endsWith('.ts') || file.endsWith('.js')) && !file.endsWith('.d.ts') && !file.endsWith('.d.js');
   });
 
   // Wait for all dynamic routes to load before attaching 404 handler

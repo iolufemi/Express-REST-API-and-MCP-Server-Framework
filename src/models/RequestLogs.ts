@@ -4,7 +4,7 @@ import { SchemaFieldDefinition } from '../types/models.js';
 import debug from 'debug';
 
 const collection = 'RequestLogs';
-const service = 'Users';
+const service = 'api';
 const debugLog = debug(collection);
 
 // Queue will be imported after Bull migration

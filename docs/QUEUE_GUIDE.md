@@ -4,6 +4,15 @@
 
 The framework uses Bull for background job processing, replacing the previous Kue implementation.
 
+## Redis: separate connection for queue vs cache
+
+Cache (API response cache, rate limiting) and the job queue use **separate Redis connections** so heavy queue traffic does not block cache reads/writes.
+
+- **Cache** uses `REDIS_URL` (default `redis://127.0.0.1:6379/1`) via `src/services/database/redis.js`.
+- **Queue (Bull)** uses `REDIS_QUEUE_URL` (default `redis://127.0.0.1:6379/2`).
+
+Using different DB numbers on the same host (e.g. `/1` for cache, `/2` for queue) gives separate connections and key isolation. For full isolation under load, point `REDIS_QUEUE_URL` at a different Redis instance (e.g. another host or port).
+
 ## Queue Types
 
 - `searchIndex` - Create search tags for database records

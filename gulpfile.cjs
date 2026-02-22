@@ -102,7 +102,7 @@ gulp.task('service', function(done) {
             throw err;
         }
         var tpl = _.template(data);
-        var result = tpl({ service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase });
+        var result = tpl({ service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase, namePlural: namePlural });
 
         fs.writeFile('./src/routes/' + namePlural + '.ts', result, function(err) {
             if (err) {
@@ -115,7 +115,7 @@ gulp.task('service', function(done) {
     // Create the Route Unit Test
     (function() {
         var routeTestTmpl = isSQL ? './template/route_sql_test.tmpl' : (baseurl && endpoint ? './template/route_api_test.tmpl' : './template/route_test.tmpl');
-        var routeTestData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase };
+        var routeTestData = { service: nameCapitalise, object: nameLowerCase, objectCamelCase: nameCamelCase, namePlural: namePlural };
         if (baseurl && endpoint) {
             routeTestData.endpoint = endpoint;
             routeTestData.baseurl = baseurl;

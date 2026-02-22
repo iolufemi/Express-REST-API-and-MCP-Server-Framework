@@ -55,17 +55,12 @@ export default function ok(this: ExpressResponse, data: any, cache?: boolean, ex
         if (cache) {
           res.status(200).json(response.response);
         } else {
-          // req.cacheKey
+          // Send response immediately; write to cache in background so Redis never blocks the response
           if (req.cache && req.cacheKey) {
-            req.cache.set(req.cacheKey, response.response)
-              .then(() => {
-                res.status(200).json(response.response);
-              })
-              .catch((err: any) => {
-                log.error('Failed to cache data: ', err);
-                // This error shouldn't stop our response
-                res.status(200).json(response.response);
-              });
+            res.status(200).json(response.response);
+            req.cache.set(req.cacheKey, response.response).catch((err: any) => {
+              log.error('Failed to cache data: ', err);
+            });
           } else {
             res.status(200).json(response.response);
           }

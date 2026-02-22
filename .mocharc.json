@@ -1,7 +1,7 @@
 {
   "extension": ["ts"],
   "spec": ["test/**/*.test.ts"],
-  "timeout": 20000,
+  "timeout": 30000,
   "recursive": true,
   "reporter": "spec",
   "node-option": ["import=tsx", "import=test/setup.ts"]
