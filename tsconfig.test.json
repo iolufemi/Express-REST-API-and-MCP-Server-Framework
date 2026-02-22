@@ -5,8 +5,8 @@
     "noUnusedParameters": false,
     "skipLibCheck": true,
     "rootDir": ".",
-    "module": "Node16",
-    "moduleResolution": "Node16",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "types": ["mocha", "node", "chai"],
@@ -19,8 +19,8 @@
     "esm": true,
     "experimentalSpecifierResolution": "node",
     "compilerOptions": {
-      "module": "Node16",
-      "moduleResolution": "Node16"
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext"
     }
   },
   "include": ["test/**/*", "src/**/*", "test/globals.d.ts", "test/chai-augment.d.ts"],

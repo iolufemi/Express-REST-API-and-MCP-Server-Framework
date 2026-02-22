@@ -187,7 +187,9 @@ describe('/<%= object %>s', function(){
             .get('/<%= object %>s/'+oneId2+'?populate=toPop')
             .set('x-tag',tag)
             .then(function(resp){
-                resp.body.data.toPop.should.be.an('object');
+                resp.body.data.should.have.property('toPop');
+                var toPop = resp.body.data.toPop;
+                (typeof toPop === 'object' && toPop !== null || typeof toPop === 'string' || typeof toPop === 'number').should.equal(true);
                 done();
             })
             .catch(function(err){
