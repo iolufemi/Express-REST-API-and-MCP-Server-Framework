@@ -1,6 +1,7 @@
 import cluster from 'cluster';
 import crypto from 'node:crypto';
 import config from './config/index.js';
+import pkg from '../package.json' with { type: 'json' };
 import log from './services/logger/index.js';
 import express, { Express } from 'express';
 import expressEnforcesSSL from 'express-enforces-ssl';
@@ -104,14 +105,12 @@ async function initializeMCPServers(): Promise<void> {
     // Auto-register services from mcp/services directory
     await autoRegisterServices();
 
-    // Create unified MCP server
+    // Create unified MCP server (this process exposes MCP over HTTP only; stdio would be a separate process)
     const mcpConfig: MCPServerConfig = {
       name: config.mcpServerName,
-      version: '1.0.0',
-      transports: ['stdio'],
-      stdio: {
-        enabled: true
-      }
+      version: pkg.version,
+      transports: ['http'],
+      http: { enabled: true }
     };
 
     const mcpServer = await createUnifiedMCPServer(mcpConfig);

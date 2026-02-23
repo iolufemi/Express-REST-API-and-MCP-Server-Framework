@@ -6,6 +6,7 @@
 
 import { ExpressRequest, ExpressResponse, ExpressNext } from '../types/express.js';
 import config from '../config/index.js';
+import pkg from '../../package.json' with { type: 'json' };
 import { discoverAllControllerMethods } from '../mcp/utils/controller-discovery.js';
 import { getAllModelMetadata } from '../mcp/utils/model-metadata.js';
 import mcpRegistry from '../mcp/registry.js';
@@ -40,7 +41,7 @@ const MCPConfigController = {
       if (!baseUrl) {
         // Try to get from request
         const protocol = req.protocol || 'https';
-        const host = req.get('host') || 'localhost:8080';
+        const host = req.get('host') || `localhost:${config.port}`;
         baseUrl = `${protocol}://${host}`;
       }
 
@@ -129,7 +130,7 @@ const MCPConfigController = {
           // Generic MCP configuration format
           mcpConfig = {
             name: config.mcpServerName,
-            version: '1.0.0',
+            version: pkg.version,
             transport: {
               type: transport,
               url: mcpEndpoint
@@ -146,7 +147,7 @@ const MCPConfigController = {
             },
             server: {
               name: config.mcpServerName,
-              version: '1.0.0',
+              version: pkg.version,
               description: `MCP server (${config.mcpServerName})`,
               baseUrl: baseUrl,
               endpoint: mcpEndpoint
@@ -212,7 +213,7 @@ const MCPConfigController = {
       const info = {
         server: {
           name: config.mcpServerName,
-          version: '1.0.0',
+          version: pkg.version,
           description: `MCP server (${config.mcpServerName})`,
           enabled: config.enableMcp
         },

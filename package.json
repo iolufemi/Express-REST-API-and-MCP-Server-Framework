@@ -1,5 +1,5 @@
 {
-  "name": "api-template",
+  "name": "Express-REST-API-and-MCP-Server-Framework",
   "version": "1.1.0",
   "description": "A template for creating APIs and MCP servers Fast",
   "type": "module",

@@ -65,12 +65,16 @@ All three servers are combined into a **Unified MCP Server** that provides a sin
 ```typescript
 import { createUnifiedMCPServer } from './mcp/servers/unified.js';
 
+// Standalone process with STDIO (e.g. CLI):
 const mcpServer = createUnifiedMCPServer({
   name: 'my-api-mcp',
   version: '1.0.0',
   transports: ['stdio'],
   stdio: { enabled: true }
 });
+
+// In this framework's Express app (src/app.ts), MCP uses HTTP only: transports: ['http'], and
+// Streamable HTTP is attached at /mcp/http (no call to start()).
 ```
 
 ## Configuration
@@ -92,31 +96,33 @@ MCP_SERVER_NAME=express-api-framework-mcp
 
 ### Programmatic Configuration
 
-Configure MCP servers programmatically in your application:
+Configure MCP servers programmatically in your application.
+
+**In this framework's Express app** (`src/app.ts`), MCP is configured with **HTTP only**; the app attaches Streamable HTTP at `/mcp/http` and does not call `mcpServer.start()`:
 
 ```typescript
-import { createUnifiedMCPServer } from './mcp/servers/unified.js';
-import { MCPServerConfig } from './types/mcp.js';
+// What the Express app uses (HTTP only)
+const mcpConfig: MCPServerConfig = {
+  name: config.mcpServerName,
+  version: pkg.version,
+  transports: ['http'],
+  http: { enabled: true }
+};
+const mcpServer = await createUnifiedMCPServer(mcpConfig);
+// Then: mcpServer.server.connect(streamableHttpTransport) for /mcp/http
+```
 
+**Standalone process** (e.g. CLI with STDIO, or your own script that calls `start()`):
+
+```typescript
 const mcpConfig: MCPServerConfig = {
   name: 'my-api-mcp',
   version: '1.0.0',
-  transports: ['stdio'],  // or ['http', 'sse']
-  stdio: {
-    enabled: true
-  },
-  http: {
-    enabled: false,
-    port: 8081,
-    host: 'localhost'
-  },
-  sse: {
-    enabled: false,
-    port: 8082,
-    host: 'localhost'
-  }
+  transports: ['stdio'],  // or ['http'], ['sse']
+  stdio: { enabled: true },
+  http: { enabled: false },
+  sse: { enabled: false }
 };
-
 const mcpServer = createUnifiedMCPServer(mcpConfig);
 await mcpServer.start();
 ```
@@ -652,7 +658,9 @@ const schemaObject: Record<string, any> = {
 };
 ```
 
-### Example 4: Starting MCP Server Programmatically
+### Example 4: Starting MCP Server Programmatically (STDIO / standalone)
+
+This example is for a **standalone process** using STDIO. The Express app instead uses `transports: ['http']` and attaches Streamable HTTP at `/mcp/http` without calling `start()`.
 
 ```typescript
 import { createUnifiedMCPServer } from './mcp/servers/unified.js';
@@ -660,10 +668,8 @@ import { autoRegisterServices } from './mcp/auto-register.js';
 import mcpRegistry from './mcp/registry.js';
 
 async function startMCPServer() {
-  // Auto-register services
   await autoRegisterServices();
 
-  // Create unified server
   const mcpServer = createUnifiedMCPServer({
     name: 'my-api-mcp',
     version: '1.0.0',

@@ -6,6 +6,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { MCPServerConfig } from '../../../types/mcp.js';
+import pkg from '../../../../package.json' with { type: 'json' };
 
 /**
  * Create and configure the Services MCP server
@@ -14,7 +15,7 @@ export function createServicesMCPServer(config: MCPServerConfig): McpServer {
   const mcpServer = new McpServer(
     {
       name: config.name || 'services-mcp-server',
-      version: config.version || '1.0.0'
+      version: config.version || pkg.version
     },
     {
       capabilities: {

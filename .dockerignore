@@ -1,0 +1,45 @@
+# Dependencies (reinstalled in image)
+node_modules
+npm-debug.log*
+
+# Build output (rebuilt in image)
+dist
+dist-test
+*.tsbuildinfo
+
+# Tests and tooling (not needed at runtime)
+test
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+
+# Docs and dev files
+docs
+.git
+.github
+.gitignore
+.env
+.env.*
+!.env.example
+*.md
+!README.md
+
+# IDE and OS
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+
+# Misc
+logs
+*.log
+.grunt
+.lock-wscript
+build/Release
+jspm_packages
+.npm
+.node_repl_history
+todo
+TODO.md
