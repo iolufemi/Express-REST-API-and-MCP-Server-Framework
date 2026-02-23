@@ -59,10 +59,20 @@
     "braces": "^3.0.3",
     "semver-regex": "^3.1.4",
     "node-gyp": "^12.0.0",
-    "winston-loggly-bulk": {
-      "node-loggly-bulk": {
-        "axios": "1.13.5"
-      }
+    "node-loggly-bulk": {
+      "axios": "1.13.5"
+    },
+    "diff": "^5.2.0",
+    "js-yaml": "^3.14.2",
+    "micromatch": "^4.0.8",
+    "tmp": "^0.2.4",
+    "got": "^11.8.5",
+    "http-cache-semantics": "^4.1.1",
+    "@conventional-changelog/git-client": "^2.0.0",
+    "gulp-mocha": {
+      "debug": "^4.3.1",
+      "diff": "^5.2.0",
+      "js-yaml": "^3.14.2"
     }
   },
   "devDependencies": {
@@ -80,11 +90,11 @@
     "c8": "^10.1.3",
     "chai": "^4.3.10",
     "chai-as-promised": "^8.0.0",
-    "conventional-github-releaser": "1.1.7",
+    "@octokit/rest": "^21.0.2",
+    "conventional-changelog-cli": "^5.0.0",
     "eslint": "^9.17.0",
     "gulp": "^5.0.1",
     "gulp-bump": "^2.7.0",
-    "gulp-conventional-changelog": "^1.1.3",
     "gulp-eslint": "^6.0.0",
     "gulp-git": "^2.10.1",
     "gulp-mocha": "^7.0.2",
