@@ -1,5 +1,7 @@
 # Populate on SQL-based endpoints
 
+See the [documentation index](./index.md) for setup and other guides.
+
 SQL-based endpoints (generated with `--sql`) support a **`populate`** query parameter on GET requests. It tells Sequelize to **include** related records (JOIN) so the response contains the full related row(s) instead of only the foreign key.
 
 The generated template includes one example reference field, **`toPop`**, which is a self-reference (e.g. Order → Order). You can add more reference fields and make them work with `?populate=...` by defining the column and the Sequelize **association**, and following the convention below.

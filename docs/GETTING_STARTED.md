@@ -143,18 +143,17 @@ See the main [docs index](./index.md#x-tag-requirement-for-post-requests) for th
 
 ## MCP Integration
 
-To enable MCP servers:
+MCP is enabled when **`ENABLE_MCP=true`** or when **`NODE_ENV=development`** (see `config.enableMcp`). No separate "start MCP server" step is needed: the API server exposes the MCP HTTP transport at **`/mcp/http`** when MCP is enabled.
 
-1. Set `ENABLE_MCP=true` in your environment
-2. Set `START_MCP_SERVER=true` to start the MCP server
-3. Generate client configuration: `GET /mcp/config?format=claude&transport=http`
-4. Install the configuration in your LLM client
-5. Connect your LLM client to the MCP server
+1. Start the API server with MCP enabled (`npm run dev` or `ENABLE_MCP=true npm start`).
+2. Generate client configuration: `GET /mcp/config?format=claude&transport=http`
+3. In Cursor (or another MCP client), add an HTTP server with `url: http://localhost:8080/mcp/http`.
+4. See [MCP Guide](./MCP_GUIDE.md) and [docs index](./index.md#model-context-protocol-mcp-integration) for tools and resources.
 
 The framework automatically exposes:
-- All model data as MCP resources
-- All controller methods as MCP tools
-- Schema field descriptions for LLM context
+- **MCP tools** (per model): `create_<model>`, `create_many_<model>`, `update_<model>`, `delete_<model>` (model name lowercased, e.g. `create_items`).
+- **MCP resources**: `<model>://list`, `<model>://{id}`, `<model>://search` (with optional `?limit=&skip=` on list; response includes `pagination.nextPageUri`).
+- Schema field descriptions for LLM context and **`GET /{service}/schema`** for metadata.
 
 ### MCP Configuration Endpoints
 

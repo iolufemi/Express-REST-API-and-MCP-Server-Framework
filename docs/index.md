@@ -2,9 +2,7 @@
 
 [![Build Status](https://travis-ci.org/iolufemi/Express-REST-API-Generator.svg?branch=dev)](https://travis-ci.org/iolufemi/Express-REST-API-Generator)  [![codecov](https://codecov.io/gh/iolufemi/Express-REST-API-Generator/branch/master/graph/badge.svg)](https://codecov.io/gh/iolufemi/Express-REST-API-Generator) [![Documentation Status](https://readthedocs.org/projects/api-template/badge/?version=latest)](http://api-template.readthedocs.io/en/latest/?badge=latest)
 
-Express REST API Generator is an Express Based API skeleton. A template for starting projects with express as an API. This project can be used for creating a RESTful API using Node JS, Express as the framework, Mongoose to interact with a MongoDB instance and Sequelize for support of SQL compatible databases. Mocha is also used for running unit tests in the project.
-
-The resulting API from this project is a JSON REST API which will respond to requests over HTTP. REST Clients can, therefore, connect to the resulting REST server.
+Express REST API Generator is a framework for building RESTful APIs with Express.js. It uses Node.js, Express, Mongoose (MongoDB), and Sequelize (SQL). Every generated service exposes both REST endpoints and an MCP server so LLMs can interact with your API. The resulting app is a JSON REST API over HTTP plus MCP tools and resources for AI clients.
 
 ## What is API?
 
@@ -20,31 +18,60 @@ Representational state transfer (REST) or RESTful web services is a way of provi
 - [Easily Develop Node.js and MongoDB Apps with Mongoose](https://scotch.io/tutorials/using-mongoosejs-in-node-js-and-mongodb-applications)
 - [Build a RESTful API Using Node and Express 4](https://scotch.io/tutorials/build-a-restful-api-using-node-and-express-4)
 
+## What is MCP?
+
+**MCP (Model Context Protocol)** is an open protocol that lets AI assistants (e.g. Claude, ChatGPT, Cursor) interact with your application through a standard interface. Instead of the LLM calling your REST API with raw HTTP, it uses MCP to discover and use **tools** (actions like create, update, delete) and **resources** (read-only data like list and get-by-id).
+
+This framework includes a built-in MCP server. When you generate a service with `npm run generate -- --name users`, the same data is exposed as REST endpoints and as MCP tools and resources. See [MCP Guide](./MCP_GUIDE.md) for setup and details.
+
 ## Why use Express REST API Generator?
 
-1. To enable you to develop REST APIs in the fastest way possible.
-2. To encourage endpoint versioning.
-3. To encourage unit testing and make it super easy to get started with writing unit tests by generating basic unit tests for generated components. 
-4. To enforce best practice in writing TypeScript/JavaScript apps by using lint.
-5. To encourage good code file structure that can be easily followed by other team members, especially new team members.
-6. To make it easy to build secure APIs with the ability to communicate with the frontend in an encrypted fashion.
-7. To encourage backing up of deleted data.
-8. To encourage logging API requests and responses for audit purposes.
-9. To encourage proper Error handling and logging.
-10. To encourage a uniform API response format across teams.
-11. To make it easy to write asynchronous logic and applications using the inbuilt distributed job queue.
-12. To provide Model Context Protocol (MCP) integration for AI/LLM tooling and resource access.
+1. **Fast development** — Generate full CRUD + MCP with one command (`npm run generate -- --name <Name>`).
+2. **Dual interface** — Every generated service exposes both REST API and MCP (tools + resources) for LLMs.
+3. **LLM-ready** — Connect Cursor, Claude, or other MCP clients via HTTP; no extra glue code.
+4. **TypeScript** — Full type safety and a clear structure for controllers and models.
+5. **Endpoint versioning** — Route files like `users.v1.ts` map to `/v1/users`; latest at `/users`.
+6. **Unit testing** — Auto-generated tests for routes, controllers, and models; run with `npm test`.
+7. **Best practices** — Linting, consistent error handling, and uniform response formats.
+8. **Security** — Optional encryption, rate limiting, x-tag for POST; secure by default.
+9. **Data safety** — Deleted records go to trash and can be restored.
+10. **Audit** — Request/response logging for debugging and compliance.
+11. **Background jobs** — Bull queue, clock, and workers for scheduled and async tasks.
+12. **Database choice** — MongoDB (Mongoose), SQL (Sequelize), or an external API as the data source.
+13. **Organized layout** — Clear separation of routes, controllers, models, services, and MCP.
 
 ## Installation
 
-To start your project with Express REST API Generator, clone the repository from GitHub and install the dependencies.
+### Prerequisites
+
+- **Node.js** 22.x or higher (LTS recommended)
+- **MongoDB** (for default database)
+- **Redis** (for queue system and caching)
+- **SQL database** (optional, for Sequelize models)
+
+### Setup
+
+Clone the repository and install dependencies:
 
 ```bash
 $ git clone https://github.com/iolufemi/Express-REST-API-Generator.git ./yourProjectName 
 $ cd yourProjectName
 $ npm install
-$ npm install
 ```
+
+### Key scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run generate -- --name <Name>` | Generate a **MongoDB** CRUD endpoint (use `-n` for short). |
+| `npm run generate -- --name <Name> --sql` | Generate a **SQL** CRUD endpoint. |
+| `npm run generate -- --name <Name> --baseurl <URL> --endpoint <path>` | Generate an **API-as-DB** endpoint. Short: `-n`, `-b`, `-e`. |
+| `npm run dev` | Start development server with hot reload |
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm start` | Run production server |
+| `npm test` | Run unit tests |
+| `npm run type-check` | TypeScript type-check only |
+| `npm run release -- -r patch` | Bump version, changelog, tag, GitHub release (use `minor` or `major` for `-r` as needed) |
 
 Then generate your first API endpoint using the **`generate`** script (no global gulp install needed):
 
@@ -98,16 +125,25 @@ $ npm run dev
 ```
 This will automatically restart your app whenever a change is detected (uses `tsx watch`).
 
-You will now be able to access CRUD (create, read, update and delete) endpoints 
+### REST API endpoints
 
-`[POST] http://localhost:8080/yourFirstEndpoint` Create yourFirstEndpoint resources
-`[GET] http://localhost:8080/yourFirstEndpoint` Get yourFirstEndpoint resources. Supports limits, sorting, pagination, select (projection), search and date range
-`[GET] http://localhost:8080/yourFirstEndpoint/:id` Get a yourFirstEndpoint resource
-`[PUT] http://localhost:8080/yourFirstEndpoint` Update yourFirstEndpoint resources
-`[PATCH] http://localhost:8080/yourFirstEndpoint/:id` Update one yourFirstEndpoint resource
-`[DELETE] http://localhost:8080/yourFirstEndpoint?key=value` Delete yourFirstEndpoint resources
-`[DELETE] http://localhost:8080/yourFirstEndpoint/:id` Delete one yourFirstEndpoint resource
-`[POST] http://localhost:8080/yourFirstEndpoint/:id/restore` Restore a previously deleted yourFirstEndpoint resource
+- `[POST] http://localhost:8080/yourFirstEndpoint` — Create resources (single or bulk)
+- `[GET] http://localhost:8080/yourFirstEndpoint` — List/search (filters, pagination, sorting, projection, date range)
+- `[GET] http://localhost:8080/yourFirstEndpoint/:id` — Get one resource
+- `[PUT] http://localhost:8080/yourFirstEndpoint` — Update multiple (with query)
+- `[PATCH] http://localhost:8080/yourFirstEndpoint/:id` — Update one
+- `[DELETE] http://localhost:8080/yourFirstEndpoint?key=value` — Delete multiple (with query)
+- `[DELETE] http://localhost:8080/yourFirstEndpoint/:id` — Delete one
+- `[POST] http://localhost:8080/yourFirstEndpoint/:id/restore` — Restore a deleted resource
+- `[GET] http://localhost:8080/yourFirstEndpoint/schema` — Schema metadata (for MCP and API consumers)
+
+### Health and MCP endpoints
+
+- `[GET] http://localhost:8080/health` — Full health (databases, queues, uptime)
+- `[GET] http://localhost:8080/health/ready` — Readiness probe
+- `[GET] http://localhost:8080/health/live` — Liveness probe
+- `[GET] http://localhost:8080/mcp/config` — Generate MCP client config (e.g. `?format=claude&transport=http&download=true`)
+- `[GET] http://localhost:8080/mcp/info` — MCP server info (tools, resources, services)
 
 ### x-tag requirement for POST requests
 
@@ -141,7 +177,8 @@ To define a clock, look for the `clock` collection in the MongoDB you connected 
     "crontab" : "* * * * *", 
     "name" : "Task Name", 
     "job" : "theJobAsDefinedInTheWorkerFile", 
-    "enabled" : true
+    "enabled" : true,
+    "arguments" : {}
 }
 ```
 
@@ -160,19 +197,36 @@ See `/services/queue/jobs` for sample tasks and `/services/queue/workers` for ho
 
 You can create multiple versions of your API endpoints by simply adding the version number to your route file name. eg. `users.v1.ts` will put a version of the users resources on the `/v1/users` endpoint. users.v2.ts will put a version of the users resources on the `/v2/users` endpoint. The latest version of the resources will always be available at the `/users` endpoint.
 
-> NOTE: This project will automatically load route files found in the routes folder.
+> NOTE: This project will automatically load route files found in the `src/routes/` folder.
 
 ## Model Context Protocol (MCP) Integration
 
-This project includes built-in support for the Model Context Protocol (MCP), enabling AI/LLM tools to interact with your API through standardized resources and tools.
+This project includes a built-in MCP server so LLMs can use your API via tools and resources (see [What is MCP?](#what-is-mcp) above).
 
-### MCP Features
+### Generated MCP tools and resources
 
-- **Automatic Model Exposure**: All generated models are automatically exposed as MCP resources
-- **Controller Method Exposure**: Controller methods can be exposed as MCP tools using JSDoc annotations
-- **Schema Metadata**: Model schemas include detailed descriptions for LLM context
-- **Resource Access**: Models are accessible via MCP resource URIs
-- **Tool Execution**: Controller methods can be called as MCP tools
+Every generated service is exposed as MCP tools and resources (model name is lowercased; e.g. `Items` → `items`):
+
+**MCP Tools** (actions LLMs can call):
+- `create_<model>` — Create one record (e.g. `create_items`)
+- `create_many_<model>` — Bulk create (e.g. `create_many_items`; pass `{ "items": [ {...}, {...} ] }`)
+- `update_<model>` — Update a record by id and data
+- `delete_<model>` — Delete a record by id
+
+**MCP Resources** (read-only; LLMs read via resource URIs):
+- `<model>://list` — List records (optional `?limit=N&skip=M` for pagination; response includes `pagination.nextPageUri`)
+- `<model>://{id}` — Get one record by id
+- `<model>://search` — Search (e.g. `?q=...` or `?query=...`)
+
+Example for a generated `Items` service: tools `create_items`, `create_many_items`, `update_items`, `delete_items`; resources `items://list`, `items://search`, `items://{id}`.
+
+### MCP features
+
+- **Automatic model exposure**: All generated models are exposed as MCP resources and tools
+- **Controller method exposure**: Additional controller methods can be exposed as MCP tools via JSDoc annotations
+- **Schema metadata**: Model schemas include descriptions for LLM context
+- **Resource access**: Models are readable via MCP resource URIs
+- **Tool execution**: Create, update, delete (and bulk create) are callable as MCP tools
 
 ### Exposing Controller Methods to MCP
 
@@ -220,12 +274,13 @@ Navigate to other guides from here:
 
 - **[Getting Started](./GETTING_STARTED.md)** — Prerequisites, installation, configuration, generating services, testing
 - **[Architecture](./ARCHITECTURE.md)** — System design, MCP layer, auto-registration
-- **[MCP Guide](./MCP_GUIDE.md)** — MCP integration, tools, resources, schema, client configuration
+- **[MCP Guide](./MCP_GUIDE.md)** — MCP integration, tools, resources, schema, Cursor setup, client configuration
 - **[Queue Guide](./QUEUE_GUIDE.md)** — Background jobs, clock, workers
 - **[SQL Populate](./SQL_POPULATE.md)** — How to add and use reference fields with `?populate=` on SQL endpoints
 - **[Migration](./MIGRATION.md)** — Migration notes and changes
+- **[Security Updates](./SECURITY_UPDATES.md)** — Security-related dependency and configuration notes
 
-From the project root, the main [README](../README.md) also lists these and other docs.
+From the project root, the main [README](../README.md) lists these and release instructions (`npm run release -- -r patch`).
 
 ## File Structure
 
@@ -272,3 +327,7 @@ View the code of conduct [here](https://github.com/iolufemi/Express-REST-API-Gen
 - [Olufemi Olanipekun](https://github.com/iolufemi)
 
 ## FAQs
+
+- **How do I get an x-tag for POST?** Call `GET /initialize`; the response includes `data['x-tag']`. Send it as the `x-tag` header (or `?x-tag=...`) on every POST.
+- **How do I connect Cursor to the MCP server?** Start the API with MCP enabled (`npm run dev` or `ENABLE_MCP=true`), then in Cursor MCP settings add an HTTP server with URL `http://localhost:8080/mcp/http`. See [MCP Guide](./MCP_GUIDE.md#connecting-from-cursor).
+- **Where are routes loaded from?** Route files in `src/routes/` are loaded automatically. Use `users.v1.ts` for `/v1/users`; the latest version is also at `/users`.

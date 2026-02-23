@@ -37,9 +37,9 @@ MCP enables AI assistants to:
 The MCP implementation consists of three main server types:
 
 ### 1. Models MCP Server
-Exposes model data as **resources** and **tools**:
-- **Resources**: Read-only access to model data (list, get by ID, search)
-- **Tools**: Model-level operations (create, update, delete)
+Exposes model data as **resources** and **tools** (model name is lowercased, e.g. `Items` → `items`):
+- **Resources**: Read-only — `<model>://list` (with `?limit=&skip=`, `pagination.nextPageUri`), `<model>://{id}`, `<model>://search` (e.g. `?q=...` or `?query=...`)
+- **Tools**: `create_<model>`, `create_many_<model>` (payload `{ "items": [ ... ] }`), `update_<model>`, `delete_<model>`
 
 **Location**: `src/mcp/servers/models/`
 
@@ -123,11 +123,11 @@ await mcpServer.start();
 
 ### Application Integration
 
-MCP servers are automatically initialized when the application starts (if `ENABLE_MCP=true` or in development mode):
+MCP servers are automatically initialized when the application starts when **`config.enableMcp`** is true (i.e. `ENABLE_MCP=true` or `NODE_ENV=development`):
 
 ```typescript
 // In src/app.ts
-if (process.env.ENABLE_MCP === 'true' || config.env === 'development') {
+if (config.enableMcp) {
   initializeMCPServers().catch((err) => {
     log.error('Error initializing MCP servers:', err);
   });
@@ -191,16 +191,14 @@ mcpRegistry.register('my-service', registerMyService);
 
 ### Automatic Exposure
 
-All standard CRUD methods are **automatically exposed** as MCP tools:
+Model-level operations are exposed as **standard MCP tools** (model name lowercased):
 
-- `find` → `find{Service}s` - List records with filtering
-- `findOne` → `get{Service}ById` - Get record by ID
-- `create` → `create{Service}` - Create new record
-- `update` → `update{Service}s` - Update multiple records
-- `updateOne` → `update{Service}ById` - Update single record
-- `delete` → `delete{Service}s` - Delete multiple records
-- `deleteOne` → `delete{Service}ById` - Delete single record
-- `restore` → `restore{Service}` - Restore from trash
+- **`create_<model>`** — Create one record
+- **`create_many_<model>`** — Bulk create (arguments: `{ "items": [ {...}, {...} ] }`)
+- **`update_<model>`** — Update a record by id and data
+- **`delete_<model>`** — Delete a record by id
+
+Additional controller methods (find, findOne, update, delete, restore, etc.) can be exposed as tools via the controller MCP server and JSDoc annotations (see [Custom Method Exposure](#custom-method-exposure)).
 
 ### Custom Method Exposure
 
@@ -352,16 +350,16 @@ No file writing is performed; discovery is read-only. Define and maintain the `s
 
 ### MCP Resources
 
-Model data is exposed as MCP resources with the following URI patterns:
+Model data is exposed as MCP resources with the following URI patterns (model name is lowercased, e.g. `Products` → `products`):
 
-- `{model}://list` - List all records
-- `{model}://{id}` - Get record by ID
-- `{model}://search` - Search records
+- **`{model}://list`** — List records (optional `?limit=N&skip=M`; response includes `pagination.nextPageUri`)
+- **`{model}://{id}`** — Get one record by id
+- **`{model}://search`** — Search (e.g. `?q=...` or `?query=...`)
 
-Example:
-- `product://list` - List all products
-- `product://507f1f77bcf86cd799439011` - Get product by ID
-- `product://search?q=laptop` - Search products
+Example for a generated `Products` model:
+- `products://list` — List products
+- `products://507f1f77bcf86cd799439011` — Get product by ID
+- `products://search?q=laptop` — Search products
 
 #### List pagination
 
@@ -490,24 +488,13 @@ const mcpConfig: MCPServerConfig = {
 
 **Usage**: Best for local development, CLI tools, and direct integration with AI assistants.
 
-### HTTP Transport (Planned)
+### HTTP Transport (Streamable HTTP)
 
-HTTP/SSE transport for remote access:
+The framework exposes the MCP **Streamable HTTP** transport on the same server as the REST API. When MCP is enabled (`config.enableMcp`), the endpoint **`GET/POST /mcp/http`** is available for Cursor and other MCP clients.
 
-```typescript
-const mcpConfig: MCPServerConfig = {
-  name: 'my-api-mcp',
-  version: '1.0.0',
-  transports: ['http'],
-  http: {
-    enabled: true,
-    port: 8081,
-    host: 'localhost'
-  }
-};
-```
-
-**Status**: Placeholder for future implementation.
+- **URL**: `http://localhost:8080/mcp/http` (or your server’s base URL + `/mcp/http`)
+- **Cursor**: In MCP settings, add a server with `type: "http"` and `url: "http://localhost:8080/mcp/http"`. See [Connecting from Cursor](#connecting-from-cursor) below.
+- **Config/info**: Use `GET /mcp/config` and `GET /mcp/info` for client setup and server capabilities.
 
 ### SSE Transport (Planned)
 
@@ -699,13 +686,13 @@ startMCPServer().catch(console.error);
 
 ### MCP Server Not Starting
 
-**Problem**: MCP server doesn't start even with `START_MCP_SERVER=true`
+**Problem**: MCP endpoints (`/mcp/http`, `/mcp/info`) return 404 or "MCP not enabled"
 
 **Solutions**:
-1. Check that `ENABLE_MCP=true` is set
-2. Verify database connections are established (MCP requires DB access)
-3. Check application logs for initialization errors
-4. Ensure `@modelcontextprotocol/sdk` is installed: `npm install @modelcontextprotocol/sdk`
+1. Enable MCP: set **`ENABLE_MCP=true`** or run with **`NODE_ENV=development`** (e.g. `npm run dev`). The app uses `config.enableMcp` to decide whether to initialize MCP.
+2. Verify database connections are established (MCP requires DB access).
+3. Check application logs for initialization errors.
+4. Ensure `@modelcontextprotocol/sdk` is installed: `npm install @modelcontextprotocol/sdk`.
 
 ### Services Not Auto-Registered
 
@@ -828,11 +815,11 @@ The endpoint returns a JSON configuration file that includes:
   "capabilities": {
     "tools": {
       "count": 24,
-      "list": ["findProducts", "createProduct", "updateProduct", ...]
+      "list": ["create_products", "create_many_products", "update_products", "delete_products", ...]
     },
     "resources": {
       "count": 9,
-      "list": ["product://list", "product://{id}", "order://list", ...]
+      "list": ["products://list", "products://{id}", "products://search", "orders://list", ...]
     }
   },
   "server": {

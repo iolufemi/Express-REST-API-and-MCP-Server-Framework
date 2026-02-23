@@ -8,7 +8,7 @@ The framework uses Bull for background job processing, replacing the previous Ku
 
 Cache (API response cache, rate limiting) and the job queue use **separate Redis connections** so heavy queue traffic does not block cache reads/writes.
 
-- **Cache** uses `REDIS_URL` (default `redis://127.0.0.1:6379/1`) via `src/services/database/redis.js`.
+- **Cache** uses `REDIS_URL` (default `redis://127.0.0.1:6379/1`) via `src/services/database/` (Redis client).
 - **Queue (Bull)** uses `REDIS_QUEUE_URL` (default `redis://127.0.0.1:6379/2`).
 
 Using different DB numbers on the same host (e.g. `/1` for cache, `/2` for queue) gives separate connections and key isolation. For full isolation under load, point `REDIS_QUEUE_URL` at a different Redis instance (e.g. another host or port).
@@ -24,8 +24,10 @@ Using different DB numbers on the same host (e.g. `/1` for cache, `/2` for queue
 
 ## Creating Jobs
 
+From application code (e.g. controllers or services), import the queue and create jobs. In this project the queue lives under `src/services/queue/`; use the path that resolves from your file (e.g. `../services/queue` or the project’s alias).
+
 ```typescript
-import queue from './services/queue';
+import queue from './services/queue';  // or your project's path to src/services/queue
 
 // Create a job
 await queue.create('logRequest', {
@@ -39,7 +41,7 @@ await queue.create('logRequest', {
 
 ## Job Processors
 
-Job processors are defined in `src/services/queue/workers.ts`. Each queue has a processor that handles jobs.
+Job processors are defined in `src/services/queue/workers.ts`. Each queue has a processor that handles jobs. Sample job definitions live in `src/services/queue/jobs.ts`. The **clock** and **workers** are started with `npm run clock` and `npm run workers` (they run the compiled code in `dist/` after `npm run build`).
 
 ## Scheduled Jobs
 
