@@ -7,8 +7,7 @@ var todo = require('gulp-todo');
 var mocha = require('gulp-mocha');
 var _ = require('lodash');
 
-var conventionalChangelog = require('gulp-conventional-changelog');
-var conventionalGithubReleaser = require('conventional-github-releaser');
+var { execSync } = require('child_process');
 var bump = require('gulp-bump');
 var git = require('gulp-git');
 var fs = require('fs');
@@ -299,14 +298,13 @@ gulp.task('sanity', gulp.series('lint', 'test', 'todo'));
 
 // Release
 
-gulp.task('changelog', function() {
-    return gulp.src('./CHANGELOG.md', {
-        buffer: false
-    })
-        .pipe(conventionalChangelog({
-            preset: 'angular' // Or to any other commit message convention you use.
-        }))
-        .pipe(gulp.dest('./'));
+gulp.task('changelog', function(done) {
+    try {
+        execSync('npx conventional-changelog -p angular -i CHANGELOG.md -s', { stdio: 'inherit' });
+        done();
+    } catch (err) {
+        done(err);
+    }
 });
 
 gulp.task('github-release', function(done) {
@@ -317,16 +315,12 @@ gulp.task('github-release', function(done) {
         );
         return done(err);
     }
-    var pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-    var repoUrl = (pkg.repository && (pkg.repository.url || pkg.repository)) || '';
-    var match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)(?:\.git)?$/);
-    var context = match ? { owner: match[1], repository: match[2] } : {};
-    conventionalGithubReleaser({
-        type: 'oauth',
-        token: config.gitOAuthToken
-    }, {
-        preset: 'angular'
-    }, context, {}, {}, {}, done);
+    try {
+        execSync('node scripts/github-release.mjs', { stdio: 'inherit' });
+        done();
+    } catch (err) {
+        done(err);
+    }
 });
 
 // Remember to pass argument '-r patch/minor/major' to the release command

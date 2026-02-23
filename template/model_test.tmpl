@@ -5,8 +5,6 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 chai.use(chaiAsPromised);
-import q from 'q';
-
 import <%= service %> from '../../src/models/<%= service %>s.js';
 import '../../src/services/queue/workers.js';
 
@@ -161,7 +159,7 @@ describe('<%= service %> Model',function(){
         it('should tag database entries properly', async function(){
             var my<%= objectCamelCase %> = await <%= service %>.create({name: 'femi',someOtherStringData: 'stuff'});
             
-            return q.Promise(function(resolve, reject) {
+            return new Promise(function(resolve, reject) {
             setTimeout(function(){
                 <%= service %>.findById(my<%= objectCamelCase %>._id)
                 .then(function(res){
