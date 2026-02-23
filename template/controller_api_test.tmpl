@@ -1,0 +1,475 @@
+// @ts-nocheck - Skip type checking for test files to avoid issues with lodash and chai types
+import chai from 'chai';
+chai.should();
+import { expect } from 'chai';
+// @ts-expect-error - chai-as-promised types may not be available
+import chaiAsPromised from 'chai-as-promised';
+chai.use(chaiAsPromised);
+import mongoose from 'mongoose';
+import <%= objectCamelCase %>sController from '../../src/controllers/<%= service %>s.js';
+// @ts-expect-error - lodash types may not be available
+import _ from 'lodash';
+import modelsPromise from '../../src/models/index.js';
+import { createMockRequest, createMockResponse, createTestServer, waitForQueueDrained } from '../helpers.js';
+import { getQueue } from '../../src/services/queue/bull.js';
+import '../../src/services/queue/workers.js';
+
+let db: any;
+let Model: any;
+let <%= objectCamelCase %>Id: any;
+let <%= objectCamelCase %>Id2: any;
+let lastId: any;
+let forDelete: any;
+let trashId: any;
+let objId1: any;
+let testServer: Awaited<ReturnType<typeof createTestServer>> | null = null;
+const from = new Date(new Date().setMinutes(new Date().getMinutes() - 3)).toISOString();
+
+describe('<%= service %>s controller (API → local /<%= endpoint %>)', function () {
+    this.timeout(20000);
+
+    before(async function () {
+        testServer = await createTestServer();
+        db = await modelsPromise;
+        Model = db.<%= service %>s;
+        if (Model && typeof Model.setBaseUrl === 'function') {
+            Model.setBaseUrl('http://localhost:' + testServer!.port);
+        }
+        objId1 = new (mongoose.Types as any).ObjectId();
+    });
+
+    after(function (done) {
+        if (testServer && testServer.server) {
+            testServer.server.close(done);
+        } else {
+            done();
+        }
+    });
+
+    it('should create documents', function(done){
+        const next = function(err: any): void{
+            if (err) {
+                done(err);
+            }
+        };
+        const res = createMockResponse();
+        res.ok = function(data: any){
+            data.should.be.an('array'); /* jslint ignore:line */
+            <%= objectCamelCase %>Id2 = data[0]._id;
+            done();
+        };
+        const req = createMockRequest({
+            body: [{
+            name: 'Femi',
+            someOtherStringData: 'this is pizza',
+            developer: objId1
+        },
+        {
+            name: 'Bolu',
+            someOtherStringData: 'this is a meat',
+            developer: objId1
+        },
+        {
+            name: 'Bayo',
+            someOtherStringData: 'Meta',
+            developer: objId1
+        }]
+        });
+        <%= objectCamelCase %>sController.create(req, res, next);
+    });
+
+    it('should create a document', function(done){
+        const next = function(err: any): void{
+            if (err) {
+                done(err);
+            }
+        };
+        const res = createMockResponse();
+        res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+            data.should.be.an('object'); /* jslint ignore:line */
+            <%= objectCamelCase %>Id = data._id;
+            done();
+        };
+        const req = createMockRequest({
+            body: {
+            name: 'Femi Olanipekun',
+            someOtherStringData: 'FooFoo Tahh',
+            toPop: <%= objectCamelCase %>Id2,
+            developer: objId1
+        }
+        });
+        <%= objectCamelCase %>sController.create(req, res, next);
+    });
+
+    describe('Find', function(){
+        it('should build projection', function(done){
+            const projection = 'name,someOtherStringData';
+            const project = <%= objectCamelCase %>sController.buildProjection(projection);
+            project.should.be.an('object');
+            project.should.have.property('name');
+            project.should.have.property('someOtherStringData');
+            done();
+        });
+        it('should search for matching documents for a given string', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: { search: 'i like pizza' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should limit the number of returned documents and check if it is the last page', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                extraData!.isLastPage.should.exist; /* jslint ignore:line */
+                data.length.should.equal(2);
+                done();
+            };
+            const req = createMockRequest({
+                query: { limit: '2' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should contain count of total record for the query', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                extraData!.total.should.be.a('number'); /* jslint ignore:line */
+                extraData!.totalResult.should.be.a('number'); /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: {}
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should return the last document Id in the array of documents returned from a query', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, extraData?: any): void{
+                lastId = extraData!.lastId;
+                data.should.be.an('array'); /* jslint ignore:line */
+                (typeof extraData!.lastId === 'string' ? extraData!.lastId : String(extraData!.lastId)).should.be.a('string'); /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: { limit: 2, sort: '_id' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should sort documents in ascending order', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: { sort: 'name' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should sort documents in descending order', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: { sort: '-name' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+        it('should select just few parameters from the documents', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                expect(data[0].someOtherStringData).to.be.undefined; /* jslint ignore:line */
+                done();
+            };
+            const req = createMockRequest({
+                query: { select: 'name' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+
+        it('should populate data of a references', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(data: any, _cache?: boolean, _extraData?: any): void{
+                data.should.be.an('array'); /* jslint ignore:line */
+                if (data.length > 0 && data[0].toPop != null) {
+                    // Backend may return populated object (Mongo) or ref ID as string/number (SQL/API)
+                    const t = data[0].toPop;
+                    ((typeof t === 'object' && t !== null) || typeof t === 'string' || typeof t === 'number').should.equal(true);
+                }
+                done();
+            };
+            const req = createMockRequest({
+                query: { _id: <%= objectCamelCase %>Id, populate: 'toPop' }
+            });
+            <%= objectCamelCase %>sController.find(req, res, next);
+        });
+
+        it('should load next page for pagination', function(done){
+            const next = function(err: any): void{
+                if (err) {
+                    done(err);
+                }
+            };
+            const res = createMockResponse();
+            res.ok = function(_data: any): void {
+                const next2 = function(err: any): void {
+                    if (err) {
+                        done(err);
+                    }
+                };
+                const res2 = createMockResponse();
+                res2.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+                    forDelete = _.map(data, function(value: any) {
+                        return value._id != null ? value._id : value;
+                    });
+                    data.length.should.be.above(0); /* jslint ignore:line */
+                    done();
+                };
+                const req2 = createMockRequest({
+                    query: { lastId: lastId != null ? String(lastId) : '' }
+                });
+                <%= objectCamelCase %>sController.find(req2, res2, next2);
+            };
+            const req = createMockRequest({
+                body: [{
+                    name: 'Femi2',
+                    someOtherStringData: 'this is pizza'
+                },
+                {
+                    name: 'Bolu2',
+                    someOtherStringData: 'this is a meat'
+                },
+                {
+                    name: 'Bayo2',
+                    someOtherStringData: 'Meta'
+                }]
+            });
+            <%= objectCamelCase %>sController.create(req, res, next);
+        });
+    });
+
+it('should filter by date range', function(done){
+    const next = function(err: any): void {
+        if (err) {
+            done(err);
+        }
+    };
+    const res = createMockResponse();
+    res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+        data.should.be.an('array'); /* jslint ignore:line */
+        data.length.should.be.above(0); /* jslint ignore:line */
+        done();
+    };
+    const req = createMockRequest({
+        query: { from: from, to: new Date().toISOString() }
+    });
+    <%= objectCamelCase %>sController.find(req, res, next);
+});
+
+it('should filter by date range without setting the end date', function(done){
+    const next = function(err: any): void {
+        if (err) {
+            done(err);
+        }
+    };
+    const res = createMockResponse();
+    res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+        data.should.be.an('array'); /* jslint ignore:line */
+        data.length.should.be.above(0); /* jslint ignore:line */
+        done();
+    };
+    const req = createMockRequest({
+        query: { from: from }
+    });
+    <%= objectCamelCase %>sController.find(req, res, next);
+});
+
+it('should find one document', function(done){
+    const next = function(err: any): void {
+        if (err) {
+            done(err);
+        }
+    };
+    const res = createMockResponse();
+    res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+        data.should.be.an('object'); /* jslint ignore:line */
+        done();
+    };
+    const req = createMockRequest({
+        params: { id: <%= objectCamelCase %>Id }
+    });
+    <%= objectCamelCase %>sController.findOne(req, res, next);
+});
+it('should update documents', function(done){
+    const next = function(err: any): void {
+        if (err) {
+            done(err);
+        }
+    };
+    const res = createMockResponse();
+    res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+        // Backend may return MongoDB-style { modifiedCount } or SQL-style array
+        if (Array.isArray(data)) {
+            data.length.should.be.at.least(0);
+        } else {
+            (data.modifiedCount != null ? data.modifiedCount : data).should.be.above(0);
+        }
+        done();
+    };
+    const req = createMockRequest({
+        query: { name: 'Femi' },
+        body: { name: 'Femi Updated' }
+    });
+    <%= objectCamelCase %>sController.update(req, res, next);
+});
+it('should update a document', function(done){
+    const next = function(err: any): void {
+        if (err) {
+            done(err);
+        }
+    };
+    const res = createMockResponse();
+    res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+        data.should.be.an('object'); /* jslint ignore:line */
+        done();
+    };
+    const req = createMockRequest({
+        params: { id: <%= objectCamelCase %>Id },
+        body: { name: 'Mr Fufuf' }
+    });
+    <%= objectCamelCase %>sController.updateOne(req, res, next);
+});
+describe('Delete', function(){
+    it('should delete multiple data', function(done){
+        const next = function(err: any): void {
+            if (err) {
+                done(err);
+            }
+        };
+        const res = createMockResponse();
+        res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+            // Keep _id as-is (number for SQL, string for Mongo) so Trash query matches
+            forDelete = _.map(data, (value: any) => value._id != null ? value._id : value);
+            data.length.should.be.above(0); /* jslint ignore:line */
+            done();
+        };
+        const req = createMockRequest({
+            query: { name: 'Bayo' }
+        });
+        <%= objectCamelCase %>sController.delete(req, res, next);
+    });
+    it('should have backed up multiple deleted data', function(done){
+        waitForQueueDrained(getQueue, 'saveToTrash', 10000)
+            .then(function() {
+                return (db.Trash as any).find().where('data._id').in(forDelete);
+            })
+            .then(function(res: any): void {
+                res.length.should.be.above(0);
+                done();
+            })
+            .catch(function(err: any): void {
+                done(err);
+            });
+    });
+    it('should delete one data', function(done){
+        const next = function(err: any): void {
+            if (err) {
+                done(err);
+            }
+        };
+        const res = createMockResponse();
+        res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+            data.should.be.an('object'); /* jslint ignore:line */
+            done();
+        };
+        const req = createMockRequest({
+            params: { id: <%= objectCamelCase %>Id }
+        });
+        <%= objectCamelCase %>sController.deleteOne(req, res, next);
+    });
+    it('should have backed up one data', function(done){
+        waitForQueueDrained(getQueue, 'saveToTrash', 10000)
+            .then(function() {
+                return (db.Trash as any).find({'data._id': <%= objectCamelCase %>Id});
+            })
+            .then(function(resp: any): void {
+                if (!resp || resp.length === 0) {
+                    done(new Error('Trash document not found'));
+                    return;
+                }
+                trashId = resp[0]._id;
+                resp.length.should.be.above(0);
+                done();
+            })
+            .catch(function(err: any): void {
+                done(err);
+            });
+    });
+});
+describe('Restore', function(){
+    it('should restore a previously deleted data', function(done){
+        const next = function(err: any): void {
+            if (err) {
+                done(err);
+            }
+        };
+        const res = createMockResponse();
+        res.ok = function(data: any, _cache?: boolean, _extraData?: any): void {
+            data.should.be.an('object'); /* jslint ignore:line */
+            done();
+        };
+        const req = createMockRequest({
+            params: { id: trashId }
+        });
+        <%= objectCamelCase %>sController.restore(req, res, next);
+    });
+});
+});

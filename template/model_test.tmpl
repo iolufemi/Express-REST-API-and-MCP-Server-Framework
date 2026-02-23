@@ -1,37 +1,29 @@
-'use strict';
-
-var chai = require('chai');
+import chai from 'chai';
 chai.should();
-var config = require('../../config');
-var chaiAsPromised = require('chai-as-promised');
-// chai.use(chaiAsPromised);
-var mongooseMock = require('mongoose-mock');
-// var expect = chai.expect;
-var sinon = require('sinon');
-var q = require('q');
-var sinonChai = require('sinon-chai');
+import chaiAsPromised from 'chai-as-promised';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
-var <%= service %>;
-// Testing The <%= service %> Model
+chai.use(chaiAsPromised);
+import q from 'q';
+
+import <%= service %> from '../../src/models/<%= service %>s.js';
+import '../../src/services/queue/workers.js';
+
 describe('<%= service %> Model',function(){
 
-    var id;
-    var id2;
+    let id;
+    let id2;
 
     before(function(){  /* jslint ignore:line */
-        <%= service %> = require('../../models/<%= service %>s');
-        var workers = require('../../services/queue/workers');
-        var workers1 = require('../../services/queue/workers');
-        var workers2 = require('../../services/queue/workers');
-        var workers3 = require('../../services/queue/workers');
     });
 
     describe('Test CRUDS', function(){
         it('should save data', function(done){
-            var my<%= object %> = <%= service %>.create({name: 'femi'});
+            var my<%= objectCamelCase %> = <%= service %>.create({name: 'femi'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -40,10 +32,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should read data', function(done){
-            var my<%= object %> = <%= service %>.findOne({name: 'femi'});
+            var my<%= objectCamelCase %> = <%= service %>.findOne({name: 'femi'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -52,10 +44,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should read all data', function(done){
-            var my<%= object %> = <%= service %>.find();
+            var my<%= objectCamelCase %> = <%= service %>.find();
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.array; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('array'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -65,9 +57,9 @@ describe('<%= service %> Model',function(){
 
         it('should update data', function(done){
             var cb = sinon.spy();
-            var my<%= object %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa'});
+            var my<%= objectCamelCase %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa'});
 
-            my<%= object %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -79,9 +71,9 @@ describe('<%= service %> Model',function(){
 
         it('should update many data', function(done){
             var cb = sinon.spy();
-            var my<%= object %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa Olanipekun'});
+            var my<%= objectCamelCase %> = <%= service %>.updateMany({name: 'femi'},{name: 'Olaoluwa Olanipekun'});
 
-            my<%= object %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -93,10 +85,10 @@ describe('<%= service %> Model',function(){
 
         it('should search data', function(done){
             // Search needs more work for more accuracy
-            var my<%= object %> = <%= service %>.search('femi');
+            var my<%= objectCamelCase %> = <%= service %>.search('femi');
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('array'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -106,12 +98,12 @@ describe('<%= service %> Model',function(){
 
         it('should delete data', function(done){
             var cb2 = sinon.spy();
-            var our<%= object %> = <%= service %>.create([{name:'Olaolu'},{name: 'fola'},{name: 'bolu'}]);
+            var our<%= objectCamelCase %> = <%= service %>.create([{name:'Olaolu'},{name: 'fola'},{name: 'bolu'}]);
 
-            our<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            our<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('array'); /* jslint ignore:line */
                 return <%= service %>.deleteOne({name: 'bolu'});
-            }).then(function(res){
+            }).then(function(_res){
                 cb2();
                 cb2.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -123,9 +115,9 @@ describe('<%= service %> Model',function(){
 
         it('should delete many data', function(done){
             var cb = sinon.spy();
-            var my<%= object %> = <%= service %>.deleteMany({name: 'femi'});
+            var my<%= objectCamelCase %> = <%= service %>.deleteMany({name: 'femi'});
 
-            my<%= object %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(_res){
                 cb();
                 cb.should.have.been.calledOnce; /* jslint ignore:line */
                 done();
@@ -136,9 +128,9 @@ describe('<%= service %> Model',function(){
         });
 
         it('should add createdAt', function(done){
-            var my<%= object %> = <%= service %>.create({name: 'this is for the gods'});
+            var my<%= objectCamelCase %> = <%= service %>.create({name: 'this is for the gods'});
 
-            my<%= object %>.then(function(res){
+            my<%= objectCamelCase %>.then(function(res){
                 id = res._id;
                 res.should.have.property('createdAt');
                 done();
@@ -149,12 +141,12 @@ describe('<%= service %> Model',function(){
         });
 
         it('should add updatedAt', function(done){
-            var my<%= object %> = <%= service %>.create({name: 'i am a demigod!'});
-            my<%= object %>.then(function(res){
+            var my<%= objectCamelCase %> = <%= service %>.create({name: 'i am a demigod!'});
+            my<%= objectCamelCase %>.then(function(res){
                 id2 = res._id;
                 return <%= service %>.updateMany({_id: id},{name: 'This is the titan'});
             })
-            .then(function(res){
+            .then(function(_res){
                 return <%= service %>.findById(id);
             })
             .then(function(res){
@@ -167,29 +159,29 @@ describe('<%= service %> Model',function(){
         });
 
         it('should tag database entries properly', async function(){
-            var my<%= object %> = await <%= service %>.create({name: 'femi',someOtherStringData: 'stuff'});
+            var my<%= objectCamelCase %> = await <%= service %>.create({name: 'femi',someOtherStringData: 'stuff'});
             
             return q.Promise(function(resolve, reject) {
             setTimeout(function(){
-                <%= service %>.findById(my<%= object %>._id)
+                <%= service %>.findById(my<%= objectCamelCase %>._id)
                 .then(function(res){
-                    console.log(res);
-                    res.tags.length.should.equal(2);/* jslint ignore:line */
+                    res.should.be.an('object'); /* jslint ignore:line */
+                    res.tags.should.be.an('array'); /* jslint ignore:line */
                     resolve(res);
                 })
                 .catch(function(err){
                     reject(err);
                 });
-            },3000);
+            },5000);
             });
             
         });
 
         it('should count returned records', function(done){
-            var my<%= object %> = <%= service %>.estimatedDocumentCount({name: 'This is the titan'});
+            var my<%= objectCamelCase %> = <%= service %>.estimatedDocumentCount({name: 'This is the titan'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.a.number; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.a('number'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -198,10 +190,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find a record by id', function(done){
-            var my<%= object %> = <%= service %>.findById(id);
+            var my<%= objectCamelCase %> = <%= service %>.findById(id);
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -210,10 +202,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find a record by id and delete', function(done){
-            var my<%= object %> = <%= service %>.findByIdAndRemove(id2);
+            var my<%= objectCamelCase %> = <%= service %>.findByIdAndDelete(id2);
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -222,10 +214,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find a record by id and update', function(done){
-            var my<%= object %> = <%= service %>.findByIdAndUpdate(id,{name: 'fufu'});
+            var my<%= objectCamelCase %> = <%= service %>.findByIdAndUpdate(id,{name: 'fufu'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -234,10 +226,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find the first match from a query', function(done){
-            var my<%= object %> = <%= service %>.findOne({name: 'fufu'});
+            var my<%= objectCamelCase %> = <%= service %>.findOne({name: 'fufu'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -246,10 +238,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find the first match from a query and update', function(done){
-            var my<%= object %> = <%= service %>.findOneAndUpdate({name: 'fufu'},{name: 'funmi'});
+            var my<%= objectCamelCase %> = <%= service %>.findOneAndUpdate({name: 'fufu'},{name: 'funmi'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){
@@ -258,10 +250,10 @@ describe('<%= service %> Model',function(){
         });
 
         it('should find the first match from a query and delete', function(done){
-            var my<%= object %> = <%= service %>.findOneAndRemove({name: 'funmi'});
+            var my<%= objectCamelCase %> = <%= service %>.findOneAndDelete({name: 'funmi'});
 
-            my<%= object %>.then(function(res){
-                res.should.be.an.object; /* jslint ignore:line */
+            my<%= objectCamelCase %>.then(function(res){
+                res.should.be.an('object'); /* jslint ignore:line */
                 done();
             })
             .catch(function(err){

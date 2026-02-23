@@ -5,7 +5,7 @@ services:
   - redis-server
   - mysql
 env:
-  - MONGOLAB_URL=mongodb://127.0.0.1/snipe LOG_MONGOLAB_URL=mongodb://127.0.0.1/snipelogs REDIS_URL=redis://127.0.0.1/1 SECURE_MODE=true NO_CACHE=no SQL_HOST=127.0.0.1
+  - MONGOLAB_URL=mongodb://127.0.0.1/snipe LOG_MONGOLAB_URL=mongodb://127.0.0.1/snipelogs REDIS_URL=redis://127.0.0.1/1 SECURE_MODE=true NO_CACHE=no SQL_HOST=127.0.0.1 DISABLE_MYSQL=no
 addons:
   apt:
     sources:
@@ -13,20 +13,22 @@ addons:
     packages:
     - mongodb-org-server
 node_js:
-  - '12'
+  - '22'
 before_script:
   - sleep 15
-  - npm install -g gulp mocha gulp-cli codecov istanbul
+  - npm install -g gulp mocha gulp-cli nyc tsx typescript
 before_install:
   - mysql -e 'CREATE DATABASE snipe;'
 install:
   - npm install
+  - npm run build
   - gulp service -n api
   - gulp service -n test -b http://localhost:8080 -e apis
   - gulp service --sql -n apisql
   - npm start >> femi.log . &
 script:
   - sleep 15
-  - >-
-    istanbul cover ./node_modules/mocha/bin/_mocha --exit --report lcovonly -- -R spec
-    && codecov
+  - npm run test:coverage
+  - npm run type-check
+after_success:
+  - nyc report --reporter=text-lcov | codecov

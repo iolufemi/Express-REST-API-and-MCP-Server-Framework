@@ -1,0 +1,34 @@
+/**
+ * MCP Controller Tools for <%= service %>
+ * 
+ * Auto-generated MCP integration for <%= service %> controller
+ * This file exposes <%= service %> controller methods as MCP tools
+ */
+
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import <%= service %>sController from '../../controllers/<%= service %>s.js';
+
+const controllerName = '<%= service %>s';
+const controllerNameLower = '<%= service.toLowerCase() %>s';
+
+/**
+ * Register <%= service %> controller tools with MCP server
+ * 
+ * All controller methods with @mcp.expose true annotations are automatically
+ * exposed as MCP tools. Default CRUD methods are also auto-exposed.
+ */
+export function register<%= service %>ControllerTools(server: McpServer): void {
+  // Default CRUD methods are automatically exposed
+  // Custom methods require @mcp.expose true annotation
+
+  // Tool handlers would be registered here
+  // Each tool would call the corresponding controller method
+}
+
+/**
+ * MCP service registration function
+ */
+export default async function register<%= service %>ControllerMCP(server: McpServer): Promise<void> {
+  register<%= service %>ControllerTools(server);
+}

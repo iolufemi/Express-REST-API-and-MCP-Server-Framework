@@ -1,0 +1,36 @@
+# Source files (not needed in npm package)
+src/
+test/
+template/
+docs/
+examples/
+
+# Configuration files
+tsconfig*.json
+.eslintrc.json
+.prettierrc.json
+typedoc.json
+nodemon.json
+.travis.yml
+.github/
+
+# Development files
+TODO.md
+MCP_CONCEPTS.md
+*.md
+!README.md
+
+# Build artifacts
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
