@@ -72,9 +72,9 @@ $ npm install
 | `npm start` | Run production server |
 | `npm test` | Run unit tests (Mocha, spec reporter) |
 | `npm run type-check` | Run TypeScript type-check only |
-| `npm run release -- -r patch` | Bump version, changelog, tag, and GitHub release (use `minor` or `major` for -r as needed) |
+| `npm run release -- --release-type patch` | Bump version, changelog, tag, and GitHub release (use `minor` or `major` for `--release-type` as needed) |
 
-For **release** to create the GitHub release, set **`GITHUB_TOKEN`**, **`GIT_OAUTH_TOKEN`**, or **`CONVENTIONAL_GITHUB_RELEASER_TOKEN`** to a [Personal Access Token](https://github.com/settings/tokens): classic token needs **`repo`** scope; fine-grained token needs **Releases: Read and write** for this repository. Example: `GITHUB_TOKEN=ghp_xxx npm run release -- -r patch`.
+For **release** to create the GitHub release, set **`GITHUB_TOKEN`**, **`GIT_OAUTH_TOKEN`**, or **`CONVENTIONAL_GITHUB_RELEASER_TOKEN`** to a [Personal Access Token](https://github.com/settings/tokens): classic token needs **`repo`** scope; fine-grained token needs **Releases: Read and write** for this repository. Example: `GITHUB_TOKEN=ghp_xxx npm run release -- --release-type patch`. You can also use `RELEASE_TYPE=minor npm run release` (no extra args).
 
 The **`generate`** script runs `npx gulp --gulpfile gulpfile.cjs service` so the correct gulpfile is always used (avoids "No gulpfile found" when running `gulp` directly).
 

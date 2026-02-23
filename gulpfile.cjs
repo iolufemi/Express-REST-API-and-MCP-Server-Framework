@@ -323,20 +323,19 @@ gulp.task('github-release', function(done) {
     }
 });
 
-// Remember to pass argument '-r patch/minor/major' to the release command
+// Pass release type via --release-type patch|minor|major or RELEASE_TYPE=patch|minor|major (avoid -r; Node treats it as --require).
 gulp.task('bump-version', function() {
     var args = argv(process.argv.slice(2));
-    // We hardcode the version change type to 'patch' but it may be a good idea to
-    // use minimist (https://www.npmjs.com/package/minimist) to determine with a
-    // command argument whether you are doing a 'major', 'minor' or a 'patch' change.
-    if (!args.r) {
-        throw new Error('The release type is not defined! Please pass the -r switch with a release type argument (patch/minor/major)');
+    // Prefer --release-type or RELEASE_TYPE so -r is not passed to Node (Node treats -r as --require).
+    var releaseType = args['release-type'] || args.releaseType || process.env.RELEASE_TYPE || args.r;
+    if (!releaseType) {
+        throw new Error(
+            'Release type not set. Use: --release-type patch|minor|major, or RELEASE_TYPE=patch|minor|major npm run release'
+        );
     }
-    else {
-        return gulp.src(['./package.json'])
-            .pipe(bump({ type: args.r }).on('error', function (err) { console.error(err); }))
-            .pipe(gulp.dest('./'));
-    }
+    return gulp.src(['./package.json'])
+        .pipe(bump({ type: releaseType }).on('error', function (err) { console.error(err); }))
+        .pipe(gulp.dest('./'));
 });
 
 gulp.task('commit-changes', function() {
