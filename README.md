@@ -1,6 +1,6 @@
 # Express REST API Generator
 
-[![Build Status](https://travis-ci.org/iolufemi/Express-REST-API-Generator.svg?branch=dev)](https://travis-ci.org/iolufemi/Express-REST-API-Generator)  [![codecov](https://codecov.io/gh/iolufemi/Express-REST-API-Generator/branch/master/graph/badge.svg)](https://codecov.io/gh/iolufemi/Express-REST-API-Generator) [![Documentation Status](https://readthedocs.org/projects/api-template/badge/?version=latest)](http://api-template.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/iolufemi/Express-REST-API-Generator/branch/master/graph/badge.svg)](https://codecov.io/gh/iolufemi/Express-REST-API-Generator) [![Documentation Status](https://readthedocs.org/projects/express-rest-api-generato/badge/?version=latest)](https://express-rest-api-generato.readthedocs.io//en/latest/?badge=latest)
 
 Express REST API Generator is a comprehensive development framework for building RESTful APIs with Express.js. It provides a complete template for creating production-ready APIs using Node.js, Express, Mongoose (MongoDB), and Sequelize (SQL databases). Every generated service exposes both REST endpoints and an MCP (Model Context Protocol) server so LLMs can interact with your API directly.
 
