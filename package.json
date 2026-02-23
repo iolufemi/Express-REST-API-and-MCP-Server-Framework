@@ -19,22 +19,33 @@
     "clock": "node dist/services/queue/clock.js",
     "workers": "node dist/services/queue/workers.js",
     "gulp": "npx gulp --gulpfile gulpfile.cjs",
-    "generate": "npx gulp --gulpfile gulpfile.cjs service"
+    "generate": "npx gulp --gulpfile gulpfile.cjs service",
+    "release": "gulp --gulpfile gulpfile.cjs release"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iolufemi/api-template.git"
+    "url": "git+https://github.com/iolufemi/Express-REST-API-Generator.git"
   },
   "keywords": [
     "REST",
-    "API"
+    "API",
+    "MCP",
+    "LLM",
+    "AI",
+    "Express",
+    "Node.js",
+    "TypeScript",
+    "MongoDB",
+    "Sequelize",
+    "BullMQ",
+    "MCP Server Generator"
   ],
   "author": "Olufemi Olanipekun <iolufemi@ymail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/iolufemi/api-template/issues"
+    "url": "https://github.com/iolufemi/Express-REST-API-Generator/issues"
   },
-  "homepage": "https://github.com/iolufemi/api-template#readme",
+  "homepage": "https://github.com/iolufemi/Express-REST-API-Generator#readme",
   "overrides": {
     "minimist": "^1.2.6",
     "lodash": "^4.17.23",

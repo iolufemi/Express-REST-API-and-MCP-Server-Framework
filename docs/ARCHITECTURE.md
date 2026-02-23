@@ -24,8 +24,10 @@ The Express REST API Generator is a TypeScript-based development framework that 
    - Controllers MCP Server (exposes controller methods as tools)
    - Services MCP Server (exposes service methods as tools)
    - Unified MCP Server (combines all MCP servers)
+   - **Streamable HTTP transport** at `GET/POST /mcp/http` for Cursor and other MCP clients (when `config.enableMcp` is true)
+   - Per-model tools: `create_<model>`, `create_many_<model>`, `update_<model>`, `delete_<model>`; resources: `<model>://list`, `<model>://{id}`, `<model>://search`
    - Auto-registration system for generated services
-   - Configuration generation endpoints for LLM client setup
+   - Configuration generation endpoints (`/mcp/config`, `/mcp/info`) for LLM client setup
 
 4. **Queue System**
    - Bull queue for background job processing

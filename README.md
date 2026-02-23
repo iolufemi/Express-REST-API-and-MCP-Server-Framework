@@ -2,18 +2,7 @@
 
 [![Build Status](https://travis-ci.org/iolufemi/Express-REST-API-Generator.svg?branch=dev)](https://travis-ci.org/iolufemi/Express-REST-API-Generator)  [![codecov](https://codecov.io/gh/iolufemi/Express-REST-API-Generator/branch/master/graph/badge.svg)](https://codecov.io/gh/iolufemi/Express-REST-API-Generator) [![Documentation Status](https://readthedocs.org/projects/api-template/badge/?version=latest)](http://api-template.readthedocs.io/en/latest/?badge=latest)
 
-Express REST API Generator is a comprehensive development framework for building RESTful APIs with Express.js. This project provides a complete template for creating production-ready APIs using Node.js, Express, Mongoose (MongoDB), and Sequelize (SQL databases). 
-
-**🚀 Coming Soon**: This project is being modernized to include:
-- **TypeScript** support with full type safety
-- **MCP (Model Context Protocol) servers** - enabling LLMs (Claude, ChatGPT) to interact with your API
-- **Bull queue system** for robust job processing
-- **90%+ test coverage** with comprehensive test suites
-- **Modern dependencies** and best practices
-
-The resulting API provides both:
-- **REST API endpoints** - Traditional HTTP/JSON API for web and mobile clients
-- **MCP servers** - Direct integration with LLMs for AI-powered interactions
+Express REST API Generator is a comprehensive development framework for building RESTful APIs with Express.js. It provides a complete template for creating production-ready APIs using Node.js, Express, Mongoose (MongoDB), and Sequelize (SQL databases). Every generated service exposes both REST endpoints and an MCP (Model Context Protocol) server so LLMs can interact with your API directly.
 
 ## What is API?
 
@@ -29,21 +18,33 @@ Representational state transfer (REST) or RESTful web services is a way of provi
 - [Easily Develop Node.js and MongoDB Apps with Mongoose](https://scotch.io/tutorials/using-mongoosejs-in-node-js-and-mongodb-applications)
 - [Build a RESTful API Using Node and Express 4](https://scotch.io/tutorials/build-a-restful-api-using-node-and-express-4)
 
+## What is MCP?
+
+**MCP (Model Context Protocol)** is an open protocol that lets AI assistants (e.g. Claude, ChatGPT, Cursor) interact with your application through a standard interface. Instead of the LLM calling your REST API with raw HTTP, it uses MCP to discover and use **tools** (actions like create, update, delete) and **resources** (read-only data like list and get-by-id).
+
+This framework ships with a built-in MCP server. When you generate a service with `npm run generate -- --name users`, the same data is exposed as:
+
+- **REST API** — `GET/POST/PUT/DELETE /users` for apps and integrations
+- **MCP tools** — e.g. `create_users`, `update_users`, `list_users` for LLMs
+- **MCP resources** — e.g. `users://list`, `users://{id}` for LLM context
+
+You get one codebase, dual access: traditional REST for clients and MCP for AI. See [MCP Guide](./docs/MCP_GUIDE.md) for setup (including Cursor) and details.
+
 ## Why use Express REST API Generator?
 
-1. **Fast Development**: Generate complete CRUD endpoints with a single command
-2. **Dual Interface**: Every generated service provides both REST API and MCP server interfaces
-3. **LLM Integration**: Built-in MCP servers allow LLMs (Claude, ChatGPT) to interact with your data and perform actions
-4. **Type Safety**: TypeScript support ensures type-safe code and better developer experience
-5. **Endpoint Versioning**: Built-in support for API versioning
-6. **Comprehensive Testing**: Auto-generated test suites with 90%+ coverage target
-7. **Best Practices**: Enforces code quality with linting, proper error handling, and uniform response formats
-8. **Secure by Default**: Built-in encryption, rate limiting, and security headers
-9. **Data Safety**: Automatic backup of deleted data to trash
-10. **Audit Trail**: Complete logging of API requests and responses
-11. **Job Queue**: Distributed job queue system (Bull) for background processing
-12. **Database Flexibility**: Support for MongoDB (Mongoose) and SQL databases (Sequelize)
-13. **Clean Architecture**: Well-organized file structure that scales with your team
+1. **Fast development** — Generate full CRUD + MCP with one command (`npm run generate -- --name &lt;Name&gt;`)
+2. **Dual interface** — Every generated service exposes both REST API and MCP (tools + resources) for LLMs
+3. **LLM-ready** — Connect Cursor, Claude, or other MCP clients via HTTP; no extra glue code
+4. **TypeScript** — Full type safety, strict mode, and a clear structure for controllers and models
+5. **API versioning** — Route files like `users.v1.ts` map to `/v1/users`; latest stays at `/users`
+6. **Testing** — Auto-generated tests for routes, controllers, and models; run with `npm test`
+7. **Quality** — Linting, consistent error handling, and uniform JSON response shapes
+8. **Security** — Optional encryption, rate limiting, and security headers; x-tag for POST
+9. **Data safety** — Deleted records go to trash and can be restored
+10. **Audit** — Request/response logging for debugging and compliance
+11. **Background jobs** — Bull queue + clock + workers for scheduled and async tasks
+12. **Database choice** — MongoDB (Mongoose) or SQL (Sequelize), or an external API as the data source
+13. **Organized layout** — Clear separation of routes, controllers, models, services, and MCP
 
 ## Installation
 
@@ -75,6 +76,7 @@ $ npm install
 | `npm start` | Run production server |
 | `npm test` | Run unit tests (Mocha, spec reporter) |
 | `npm run type-check` | Run TypeScript type-check only |
+| `npm run release -- -r patch` | Bump version, changelog, tag, and GitHub release (use `minor` or `major` for -r as needed) |
 
 The **`generate`** script runs `npx gulp --gulpfile gulpfile.cjs service` so the correct gulpfile is always used (avoids "No gulpfile found" when running `gulp` directly).
 
@@ -180,23 +182,20 @@ When you generate a service, you get access to:
 
 ### MCP Server Integration
 
-Every generated service automatically exposes MCP tools and resources for LLM integration:
+Every generated service is automatically exposed as MCP tools and resources (model name is lowercased; e.g. `Items` → `items`):
 
-**MCP Tools** (Actions LLMs can perform):
-- `createYourFirstEndpoint` - Create new resources
-- `getYourFirstEndpoint` - Get a resource by ID
-- `updateYourFirstEndpoint` - Update a resource
-- `updateYourFirstEndpoints` - Bulk update resources
-- `deleteYourFirstEndpoint` - Delete a resource
-- `deleteYourFirstEndpoints` - Bulk delete resources
-- `restoreYourFirstEndpoint` - Restore a deleted resource
-- `searchYourFirstEndpoints` - Search with filters
-- `listYourFirstEndpoints` - List with pagination
+**MCP Tools** (actions LLMs can call):
+- `create_<model>` — Create one record (e.g. `create_items`)
+- `create_many_<model>` — Bulk create (e.g. `create_many_items`; pass `{ "items": [ {...}, {...} ] }`)
+- `update_<model>` — Update a record by id and data
+- `delete_<model>` — Delete a record by id
 
-**MCP Resources** (Data LLMs can read):
-- `yourFirstEndpoints://list` - List all resources
-- `yourFirstEndpoints://{id}` - Get specific resource
-- `yourFirstEndpoints://search` - Search resources
+**MCP Resources** (read-only; LLMs read via resource URIs):
+- `<model>://list` — List records (optional `?limit=N&skip=M` for pagination; response includes `pagination.nextPageUri`)
+- `<model>://{id}` — Get one record by id
+- `<model>://search` — Search (e.g. `?q=...` or `?query=...`)
+
+Example for a generated `Items` service: tools `create_items`, `create_many_items`, `update_items`, `delete_items`; resources `items://list`, `items://search`, `items://{id}`.
 
 > **Note**: For every `POST` API call, you need to send an `x-tag` value in the header. This value is used for secure communication between the server and client. It is used for AES encryption when secure mode is enabled. To get a valid `x-tag`, call the `[GET] /initialize` endpoint.   
 
@@ -276,16 +275,9 @@ Express-REST-API-Generator/
 
 ## MCP (Model Context Protocol) Integration
 
-This framework provides built-in MCP server support, enabling LLMs to interact with your API directly.
+This framework provides a built-in MCP server so LLMs can use your API via tools and resources (see [What is MCP?](#what-is-mcp) above).
 
-### What is MCP?
-
-MCP (Model Context Protocol) is a protocol that allows LLMs like Claude and ChatGPT to interact with external systems through:
-- **Tools**: Callable functions (create, update, delete operations)
-- **Resources**: Read-only data access (browse, view records)
-- **Prompts**: Reusable interaction templates
-
-### How It Works
+### How it works
 
 When you generate a service with `npm run generate -- --name users`, the framework automatically:
 
@@ -329,7 +321,7 @@ All generated services come with comprehensive test suites covering:
 - Route handlers
 - Controller methods
 - Model operations
-- MCP tools and resources (coming soon)
+- MCP registration and integration
 
 ### Run Tests
 
@@ -342,7 +334,7 @@ $ npm test
 The project maintains **90%+ test coverage** with:
 - Unit tests for all components
 - Integration tests for API endpoints
-- MCP server tests (coming soon)
+- MCP-related tests for generated services
 - Queue system tests
 
 Coverage reports are generated automatically and can be viewed in the `coverage/` directory.
