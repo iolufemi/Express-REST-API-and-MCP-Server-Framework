@@ -169,8 +169,13 @@ const <%= service %>sController: <%= service %>sControllerType = {
           _query.include = [];
           const splitPopulation = populate.split(' ');
           for (const popField of splitPopulation) {
-            if (typeof popField === 'string' && popField.trim() && (models as any)[popField.trim()]) {
-              _query.include.push({ model: (models as any)[popField.trim()] });
+            const key = typeof popField === 'string' ? popField.trim() : '';
+            if (!key) continue;
+            if ((models as any)[key]) {
+              _query.include.push({ model: (models as any)[key] });
+            } else {
+              // Reference field (e.g. toPop): use self-reference with alias '<field>Ref'
+              _query.include.push({ model: Model, as: key + 'Ref', foreignKey: key });
             }
           }
         }
@@ -236,8 +241,12 @@ const <%= service %>sController: <%= service %>sControllerType = {
         _query.include = [];
         const splitPopulation = populate.split(' ');
         for (const popField of splitPopulation) {
-          if (typeof popField === 'string' && popField.trim() && (models as any)[popField.trim()]) {
-            _query.include.push({ model: (models as any)[popField.trim()] });
+          const key = typeof popField === 'string' ? popField.trim() : '';
+          if (!key) continue;
+          if ((models as any)[key]) {
+            _query.include.push({ model: (models as any)[key] });
+          } else {
+            _query.include.push({ model: Model, as: key + 'Ref', foreignKey: key });
           }
         }
       }

@@ -87,7 +87,10 @@ const jobs = {
     let task: Promise<any>;
     if (model && models[model]) {
       if (isSQL) {
-        task = (models[model] as any).update({ tags: flattenedSplit.join(', ') }, { where: dataClone });
+        task = (models[model] as any).update(
+          { tags: flattenedSplit.join(', ') },
+          { where: { _id: dataClone._id } }
+        );
       } else {
         if (update) {
           task = (models[model] as any).updateOne(dataClone, { updatedAt: new Date(Date.now()).toISOString(), tags: flattenedSplit.join(' ') });

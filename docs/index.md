@@ -70,6 +70,8 @@ $ npm run generate -- --name yourEndpointWithAPIAsDB --baseurl http://localhost:
 $ npm run generate -- --name yourEndpointWITHSQL --sql
 ```
 
+GET requests for SQL endpoints support **`?populate=<field>`** to include related records (e.g. `?populate=toPop`). The template includes one example reference field (`toPop`). To add more reference fields and make them work with populate, see **[SQL Populate](./SQL_POPULATE.md)**.
+
 > Note: You can use `-n` instead of `--name`, `-b` instead of `--baseurl`, `-e` instead of `--endpoint`. The `generate` script runs `npx gulp --gulpfile gulpfile.cjs service` so the correct gulpfile is always used.
 
 Try out your new endpoint.
@@ -107,7 +109,21 @@ You will now be able to access CRUD (create, read, update and delete) endpoints
 `[DELETE] http://localhost:8080/yourFirstEndpoint/:id` Delete one yourFirstEndpoint resource
 `[POST] http://localhost:8080/yourFirstEndpoint/:id/restore` Restore a previously deleted yourFirstEndpoint resource
 
-> Note: For every `POST` API calls you need to send an `x-tag` value in the header. This value is used for secure communication between the server and client. It is used for AES encryption when secure mode is enabled. To get a valid `x-tag` call the `[GET] /initialize` endpoint.   
+### x-tag requirement for POST requests
+
+Every **POST** request must include an **`x-tag`** header (or query parameter `x-tag`). Without it, the API responds with **400 Bad Request** and a message directing you to obtain a tag.
+
+- **Get an x-tag:** `[GET] /initialize` — returns a new tag value, e.g. `{ "data": { "x-tag": "…" } }`.
+- **Send it on POST:** Include it in the request header: `x-tag: <value>` (or as query param `?x-tag=<value>`).
+
+The tag is used for secure communication and for AES encryption when secure mode is enabled. If you send a POST without `x-tag`, the response body will look like:
+
+```json
+{
+  "status": "error",
+  "message": "POST requests require an x-tag header. Get a value from GET /initialize and send it as the x-tag header (or query param x-tag)."
+}
+```   
 
 ## Some asynchronous goodness
 
@@ -206,6 +222,7 @@ Navigate to other guides from here:
 - **[Architecture](./ARCHITECTURE.md)** — System design, MCP layer, auto-registration
 - **[MCP Guide](./MCP_GUIDE.md)** — MCP integration, tools, resources, schema, client configuration
 - **[Queue Guide](./QUEUE_GUIDE.md)** — Background jobs, clock, workers
+- **[SQL Populate](./SQL_POPULATE.md)** — How to add and use reference fields with `?populate=` on SQL endpoints
 - **[Migration](./MIGRATION.md)** — Migration notes and changes
 
 From the project root, the main [README](../README.md) also lists these and other docs.
@@ -236,11 +253,11 @@ If you need support or want to report a bug, please log an issue [here](https://
 
 ## Running Unit Tests
 
-All generated endpoints come with complete test suits, we encourage you to update the tests as you extend the logic
+All generated endpoints come with complete test suites; we encourage you to update the tests as you extend the logic.
 
-```bash
-$ npm test
-```
+**Quick run:** `npm test` (or `npm run test:coverage` for coverage). Ensure MongoDB and Redis are running and `.env` (and optionally `.env.test`) are configured.
+
+**Full setup (so the whole suite passes):** Generate the four endpoints (SQL + API-using-SQL, Mongo + API-using-Mongo), then start the server (e.g. `npm start` on port 8080) and run `npm test`. API-based route tests call the running server at `http://localhost:8080` (override with `TEST_API_BASEURL`). See **[Getting Started → Testing](./GETTING_STARTED.md#testing)** for step-by-step setup, generate commands, and prerequisites.
 
 ## How to contribute
 

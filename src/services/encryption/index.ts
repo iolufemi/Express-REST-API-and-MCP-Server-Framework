@@ -113,6 +113,11 @@ export const encryption = {
     });
   },
 
+  /**
+   * Interpreter middleware: enforces x-tag for POST requests and optionally decrypts secure payloads.
+   * All POST requests must include an x-tag header (or query param). Get a value from GET /initialize.
+   * Without x-tag, POST receives 400 with message directing the client to use GET /initialize.
+   */
   interpreter: function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): void {
     if (req.get('x-tag') || req.query?.['x-tag']) {
       const key = req.get('x-tag') || req.query?.['x-tag'] as string;
@@ -147,7 +152,10 @@ export const encryption = {
               next(err);
             });
         } else {
-          res.badRequest?.(false);
+          res.badRequest?.(
+          false,
+          'Secure POST requires body.secureData (and body.truth). Send encrypted payload when using secure mode.'
+        );
         }
       } else {
         next();
@@ -155,7 +163,10 @@ export const encryption = {
     } else if (req.method !== 'POST') {
       next();
     } else {
-      res.badRequest?.(false);
+      res.badRequest?.(
+        undefined,
+        'POST requests require an x-tag header. Get a value from GET /initialize and send it as the x-tag header (or query param x-tag).'
+      );
     }
   }
 };

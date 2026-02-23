@@ -16,8 +16,8 @@
     "lint": "npx eslint src/**/*.ts",
     "type-check": "npx tsc --noEmit",
     "type-check:test": "npx tsc -p tsconfig.test.json --noEmit",
-    "clock": "npx tsx src/services/queue/clock.ts",
-    "workers": "npx tsx src/services/queue/workers.ts",
+    "clock": "node dist/services/queue/clock.js",
+    "workers": "node dist/services/queue/workers.js",
     "gulp": "npx gulp --gulpfile gulpfile.cjs",
     "generate": "npx gulp --gulpfile gulpfile.cjs service"
   },

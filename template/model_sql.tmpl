@@ -100,10 +100,9 @@ const <%= service %>s = db.sql.define(table, schemaObject, {
   };
 
 <%= service %>s.associate = function (_models: any): void {
-    // models.<%= service %>s.belongsTo(models.toPop, { foreignKey: 'toPop', sourceKey: '_id' });
+    // Self-reference for toPop: join so toPop is populated as toPopRef
+    <%= service %>s.belongsTo(<%= service %>s, { as: 'toPopRef', foreignKey: 'toPop' });
 };
-
-// <%= service %>s.hasMany(<%= service %>s, {foreignKey: 'toPop', sourceKey: '_id'});
 
 // Adding hooks
 <%= service %>s.afterCreate(function(user: <%= service %>Instance, _options: any): void {
@@ -113,6 +112,17 @@ const <%= service %>s = db.sql.define(table, schemaObject, {
     (ourDoc as any).model = table;
 
     // Dump it in the queue
+    queue.create('searchIndex', ourDoc as Record<string, unknown>)
+    .save();
+});
+
+<%= service %>s.afterUpdate(function(user: <%= service %>Instance, _options: any): void {
+    // Indexing for search on update
+    const ourDoc = user.dataValues;
+    (ourDoc as any).isSQL = true;
+    (ourDoc as any).model = table;
+    (ourDoc as any).update = true;
+
     queue.create('searchIndex', ourDoc as Record<string, unknown>)
     .save();
 });

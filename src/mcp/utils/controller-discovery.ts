@@ -6,19 +6,29 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { ControllerMethodMetadata } from '../../types/mcp.js';
 import { getControllerMethodMetadata } from './mcp-annotations.js';
 
+/** When running from dist/, use dist/controllers so dynamic import resolves to compiled .js */
+function defaultControllersDir(): string {
+  const thisDir = path.dirname(fileURLToPath(import.meta.url));
+  const cwd = process.cwd();
+  const rel = path.relative(cwd, thisDir);
+  const inDist = rel === 'dist' || rel.startsWith('dist' + path.sep);
+  return path.join(cwd, inDist ? 'dist' : 'src', 'controllers');
+}
+
 /**
  * Discover all controller files.
- * Resolves to project src/controllers (works when run from repo root or via tsx).
+ * Uses dist/controllers when running from compiled code (e.g. node dist/app.js), else src/controllers.
  */
 export function discoverControllerFiles(controllersDir?: string): string[] {
-  const resolved = controllersDir ?? path.join(process.cwd(), 'src', 'controllers');
+  const resolved = controllersDir ?? defaultControllersDir();
   try {
     const files = fs.readdirSync(resolved);
     return files
-      .filter(file => file.endsWith('.ts') || file.endsWith('.js'))
+      .filter(file => (file.endsWith('.ts') || file.endsWith('.js')) && !file.endsWith('.d.ts'))
       .filter(file => file !== 'index.ts' && file !== 'index.js')
       .map(file => path.join(resolved, file));
   } catch (error) {
@@ -34,8 +44,10 @@ export async function discoverControllerMethods(controllerPath: string): Promise
   const metadata: ControllerMethodMetadata[] = [];
   
   try {
-    // Dynamically import the controller (ES modules)
-    const controllerModule = await import(controllerPath.replace(/\.ts$/, '.js'));
+    // Dynamically import the controller (ES modules). Use file:// URL for absolute paths (Node ESM).
+    const importPath = controllerPath.replace(/\.ts$/, '.js');
+    const moduleUrl = path.isAbsolute(importPath) ? pathToFileURL(importPath).href : importPath;
+    const controllerModule = await import(moduleUrl);
     const controller = controllerModule.default || controllerModule;
     const controllerName = path.basename(controllerPath, path.extname(controllerPath));
 

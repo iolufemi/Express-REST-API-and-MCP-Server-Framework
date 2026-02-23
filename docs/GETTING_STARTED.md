@@ -56,6 +56,7 @@ npm run generate -- -n Product
 
 # For SQL-based models
 npm run generate -- --name Products --sql
+# See docs/SQL_POPULATE.md to add reference fields and use ?populate= on GET requests.
 
 # For API-based models (external API as data source)
 npm run generate -- --name ExternalData --baseurl https://api.example.com --endpoint data
@@ -72,13 +73,73 @@ This generates TypeScript files in `src/`:
 
 ## Testing
 
+### Prerequisites for tests
+
+- **Node.js** 22.x or higher
+- **MongoDB** — required for Mongoose models and for any generated Mongo-based endpoints
+- **Redis** — used by the test setup (cache/queue); tests clear Redis DBs before running
+- **SQL database** — required only if you have (or generate) SQL-based endpoints
+
+Ensure `.env` and optionally `.env.test` are configured (e.g. `LOG_MONGOLAB_URL`, `REDIS_URL`, `REDIS_QUEUE_URL`, and SQL vars if you use SQL). The test runner loads `.env` then `.env.test` (test overrides).
+
+### Running the full unit tests
+
+**1. Install and configure**
+
 ```bash
-# Run tests
+npm install
+# Copy .env.example to .env (and .env.test if needed) and set MongoDB, Redis, and optional SQL URLs.
+```
+
+**2. (Optional) Generate endpoints so the full suite runs**
+
+If you want the same test coverage as the template (Mongo, SQL, and API-based endpoints that call them), generate:
+
+- A **SQL-based** endpoint, then an **API-based** endpoint that uses it as the backend:
+  ```bash
+  npm run generate -- --name order --sql
+  npm run generate -- --name externalorder --baseurl http://localhost:8080 --endpoint orders
+  ```
+- A **Mongo-based** endpoint, then an **API-based** endpoint that uses it as the backend:
+  ```bash
+  npm run generate -- --name item
+  npm run generate -- --name externalitem --baseurl http://localhost:8080 --endpoint items
+  ```
+
+**3. Start the server for API route tests (optional but recommended)**
+
+Tests for **API-based** routes (e.g. `/externalorders`, `/externalitems`) call the real HTTP server so that the “external” API is available. Start the app on the default port (8080) in a separate terminal:
+
+```bash
+npm run build
+npm start
+```
+
+Leave it running, then in another terminal run the tests. If your server uses a different URL, set `TEST_API_BASEURL` (e.g. `TEST_API_BASEURL=http://localhost:3000 npm test`).
+
+**4. Run the tests**
+
+```bash
+# Run all tests (Mocha; uses test/run.mjs, which loads .env and .env.test)
 npm test
 
-# Run tests with coverage
+# Run with coverage
 npm run test:coverage
+
+# Watch mode (re-run on file changes)
+npm run test:watch
 ```
+
+Controller and model tests do not require the server. Route tests for **API-based** endpoints do: they use `TEST_API_BASEURL` (default `http://localhost:8080`) to send requests to the running app.
+
+## POST requests and x-tag
+
+All **POST** requests must include an **`x-tag`** header (or query param `x-tag`). Otherwise the API returns **400** with a clear error message.
+
+1. Get a tag: `GET /initialize` → response includes `data['x-tag']`.
+2. Send it on every POST: `x-tag: <value>` in the request header.
+
+See the main [docs index](./index.md#x-tag-requirement-for-post-requests) for the exact error response and details.
 
 ## MCP Integration
 

@@ -27,7 +27,7 @@ declare global {
 
     interface Response {
       ok: (data: unknown, fromCache?: boolean, extraData?: unknown) => void;
-      badRequest: (error?: unknown) => void;
+      badRequest: (error?: unknown, message?: string) => void;
       unauthorized: (error?: unknown) => void;
       forbidden: (error?: unknown) => void;
       notFound: (error?: unknown) => void;
