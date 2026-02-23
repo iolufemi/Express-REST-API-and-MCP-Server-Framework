@@ -26,8 +26,8 @@ export async function createModelsMCPServer(config: MCPServerConfig): Promise<Mc
     }
   );
 
-  await registerModelResources(mcpServer.server);
-  await registerModelTools(mcpServer.server);
+  await registerModelResources(mcpServer);
+  await registerModelTools(mcpServer);
 
   return mcpServer;
 }

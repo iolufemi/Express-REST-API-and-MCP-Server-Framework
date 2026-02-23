@@ -6,14 +6,16 @@
 
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
+import { pathToFileURL, fileURLToPath } from 'url';
 import mcpRegistry from './registry.js';
 import log from '../services/logger/index.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Auto-discover and register MCP services from a directory
  */
-export async function autoRegisterServices(servicesDir: string = path.join(__dirname, './services')): Promise<void> {
+export async function autoRegisterServices(servicesDir: string = path.join(__dirname, 'services')): Promise<void> {
   try {
     if (!fs.existsSync(servicesDir)) {
       log.info(`MCP services directory does not exist: ${servicesDir}`);
@@ -21,8 +23,10 @@ export async function autoRegisterServices(servicesDir: string = path.join(__dir
     }
 
     const files = fs.readdirSync(servicesDir);
-    const serviceFiles = files.filter(file => 
-      file.endsWith('.ts') || file.endsWith('.js')
+    const serviceFiles = files.filter(
+      (file) =>
+        (file.endsWith('.js') || file.endsWith('.ts')) &&
+        !file.endsWith('.d.ts')
     );
 
     for (const file of serviceFiles) {

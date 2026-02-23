@@ -117,8 +117,14 @@ export const encryption = {
    * Interpreter middleware: enforces x-tag for POST requests and optionally decrypts secure payloads.
    * All POST requests must include an x-tag header (or query param). Get a value from GET /initialize.
    * Without x-tag, POST receives 400 with message directing the client to use GET /initialize.
+   * MCP endpoints (/mcp/*) are excluded so Cursor and other MCP clients can POST without x-tag.
    */
   interpreter: function (req: ExpressRequest, res: ExpressResponse, next: ExpressNext): void {
+    const path = (req.baseUrl || '') + (req.path || '');
+    if (path.startsWith('/mcp')) {
+      next();
+      return;
+    }
     if (req.get('x-tag') || req.query?.['x-tag']) {
       const key = req.get('x-tag') || req.query?.['x-tag'] as string;
       res.set('x-tag', key);

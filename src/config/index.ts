@@ -43,7 +43,9 @@ const config: Config = {
   logglyToken: env.LOGGLY_TOKEN,
   logglySubdomain: env.LOGGLY_SUBDOMAIN,
   logglyTag: env.LOGGLY_TAG,
-  cleanUpFailedJobs: env.CLEANUP_FAILED_JOBS
+  cleanUpFailedJobs: env.CLEANUP_FAILED_JOBS,
+  enableMcp: env.ENABLE_MCP === true || env.NODE_ENV === 'development',
+  mcpServerName: env.MCP_SERVER_NAME
 };
 
 export default config;

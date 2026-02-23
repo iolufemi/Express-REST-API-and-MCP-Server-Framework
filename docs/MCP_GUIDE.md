@@ -86,9 +86,8 @@ ENABLE_MCP=true
 # Start MCP server with STDIO transport
 START_MCP_SERVER=true
 
-# MCP server configuration
+# MCP server name (used in Cursor, /mcp/config, and /mcp/info)
 MCP_SERVER_NAME=express-api-generator-mcp
-MCP_SERVER_VERSION=1.0.0
 ```
 
 ### Programmatic Configuration
@@ -363,6 +362,57 @@ Example:
 - `product://list` - List all products
 - `product://507f1f77bcf86cd799439011` - Get product by ID
 - `product://search?q=laptop` - Search products
+
+#### List pagination
+
+To load the next page when listing, use query parameters on the list resource:
+
+- **First page:** `{model}://list?limit=20&skip=0` (or `{model}://list` for default limit 50, skip 0)
+- **Next page:** `{model}://list?limit=20&skip=20`
+- **Page N:** `{model}://list?limit=20&skip=${(N-1)*20}`
+
+The list response includes a `pagination` object so the client can request the next page without computing it:
+
+```json
+{
+  "data": [...],
+  "metadata": { "model": "Items", "fields": [...], "total": 100, "limit": 20, "skip": 0 },
+  "pagination": {
+    "limit": 20,
+    "skip": 0,
+    "total": 100,
+    "hasMore": true,
+    "nextPageUri": "item://list?limit=20&skip=20"
+  }
+}
+```
+
+- Use `pagination.nextPageUri` as the resource URI to load the next page (when `hasMore` is true).
+- Or compute the next request as the same list URI with `skip` set to `skip + limit`.
+
+#### Bulk create (tools)
+
+To create many records in one call, the MCP client calls the **`create_many_{model}`** tool with an `items` array:
+
+- **Tool name:** `create_many_items`, `create_many_foods`, etc. (one per model).
+- **Arguments:** `{ "items": [ { "name": "a", ... }, { "name": "b", ... } ] }`.
+- **Response:** `{ "created": N, "data": [ ... ] }` with the created records.
+
+Example (tools/call):
+
+```json
+{
+  "name": "create_many_items",
+  "arguments": {
+    "items": [
+      { "name": "First", "someOtherStringData": "x" },
+      { "name": "Second", "someOtherStringData": "y" }
+    ]
+  }
+}
+```
+
+Single-record create remains available via the `create_{model}` tool (e.g. `create_items`).
 
 ## Custom Service Registration
 
@@ -853,6 +903,32 @@ GET /mcp/info
   }
 }
 ```
+
+### Connecting from Cursor
+
+When adding this MCP server in Cursor (Settings → MCP → Add server), use **HTTP** transport:
+
+1. **Start your API server** (with MCP enabled: `ENABLE_MCP=true` or run in development). The server exposes **GET/POST `/mcp/http`** for the MCP Streamable HTTP transport.
+
+2. **Use this shape in Cursor’s MCP config** (e.g. in `~/.cursor/mcp.json` or the in-editor MCP settings):
+   - **`type`** must be exactly **`"http"`** (not `"http > mcp-config.json"` or anything else).
+   - **`url`** must be your server’s MCP HTTP endpoint, e.g. `http://localhost:8080/mcp/http`.
+
+   **Correct example:**
+   ```json
+   "express-api-generator-dev": {
+     "type": "http",
+     "url": "http://localhost:8080/mcp/http",
+     "env": {
+       "MCP_SERVER_URL": "http://localhost:8080/mcp/http",
+       "MCP_TRANSPORT": "http"
+     }
+   }
+   ```
+
+   **Common mistake:** Pasting output from a terminal (e.g. `curl ... > mcp-config.json`) into the `type` field, which can produce invalid values like `"http > mcp-config.json"`. Always set `type` to the literal string `"http"`.
+
+3. If you see **404** or **No server info found**, ensure the API process is running and MCP is enabled; then open `http://localhost:8080/mcp/info` in a browser to confirm the server is up.
 
 ### Cloud Deployment Setup
 

@@ -4,9 +4,15 @@
  * Registry system for auto-registering generated services with MCP
  */
 
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { MCPServiceRegistration } from '../types/mcp.js';
 import log from '../services/logger/index.js';
+
+/** HTTP transport that can handle Express req/res for Streamable HTTP */
+export interface MCPHttpTransport {
+  handleRequest(req: IncomingMessage, res: ServerResponse, parsedBody?: unknown): Promise<void>;
+}
 
 interface ServiceRegistration {
   serviceName: string;
@@ -17,6 +23,7 @@ interface ServiceRegistration {
 class MCPServiceRegistry {
   private registrations: Map<string, ServiceRegistration> = new Map();
   private server: McpServer | null = null;
+  private httpTransport: MCPHttpTransport | null = null;
 
   /**
    * Register a service with the MCP server
@@ -77,6 +84,20 @@ class MCPServiceRegistry {
    */
   getRegisteredServices(): string[] {
     return Array.from(this.registrations.keys());
+  }
+
+  /**
+   * Set the Streamable HTTP transport (used by /mcp/http route)
+   */
+  setHttpTransport(transport: MCPHttpTransport | null): void {
+    this.httpTransport = transport;
+  }
+
+  /**
+   * Get the Streamable HTTP transport, or null if not set
+   */
+  getHttpTransport(): MCPHttpTransport | null {
+    return this.httpTransport;
   }
 }
 

@@ -1,9 +1,11 @@
 import cluster from 'cluster';
+import crypto from 'node:crypto';
 import config from './config/index.js';
 import log from './services/logger/index.js';
 import express, { Express } from 'express';
 import expressEnforcesSSL from 'express-enforces-ssl';
 import os from 'os';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createUnifiedMCPServer } from './mcp/servers/unified.js';
 import { autoRegisterServices } from './mcp/auto-register.js';
 import mcpRegistry from './mcp/registry.js';
@@ -57,7 +59,7 @@ async function startServer(): Promise<void> {
     });
 
     // Initialize MCP servers if enabled (after databases are ready)
-    if (process.env.ENABLE_MCP === 'true' || config.env === 'development') {
+    if (config.enableMcp) {
       initializeMCPServers().catch((err) => {
         log.error('Error initializing MCP servers:', err);
       });
@@ -104,7 +106,7 @@ async function initializeMCPServers(): Promise<void> {
 
     // Create unified MCP server
     const mcpConfig: MCPServerConfig = {
-      name: 'express-api-generator-mcp',
+      name: config.mcpServerName,
       version: '1.0.0',
       transports: ['stdio'],
       stdio: {
@@ -113,17 +115,20 @@ async function initializeMCPServers(): Promise<void> {
     };
 
     const mcpServer = await createUnifiedMCPServer(mcpConfig);
-    
+
     // Set the server in the registry
     mcpRegistry.setServer(mcpServer.server);
 
-    // Start MCP server (only in development or when explicitly enabled)
-    if (process.env.START_MCP_SERVER === 'true') {
-      await mcpServer.start();
-      log.info('MCP servers initialized and started');
-    } else {
-      log.info('MCP servers initialized (not started - set START_MCP_SERVER=true to start)');
-    }
+    // Expose MCP over Streamable HTTP at GET/POST /mcp/http (for Cursor and other URL-based clients)
+    const httpTransport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => crypto.randomUUID()
+    });
+    await mcpServer.server.connect(httpTransport);
+    mcpRegistry.setHttpTransport(httpTransport);
+    log.info('MCP Streamable HTTP transport available at /mcp/http');
+
+    // Note: STDIO transport is not started here so that /mcp/http remains active.
+    // For STDIO-only use, run a separate process that creates the MCP server with stdio transport.
   } catch (error) {
     log.error('Failed to initialize MCP servers:', error);
   }

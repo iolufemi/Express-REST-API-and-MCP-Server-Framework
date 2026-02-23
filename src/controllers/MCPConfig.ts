@@ -96,7 +96,7 @@ const MCPConfigController = {
           // Claude Desktop configuration format
           mcpConfig = {
             mcpServers: {
-              [config.env === 'production' ? 'express-api-generator' : 'express-api-generator-dev']: {
+              [config.mcpServerName]: {
                 command: 'node',
                 args: ['-e', `require('@modelcontextprotocol/sdk/client/index.js').Client.connect({url: '${mcpEndpoint}'})`],
                 env: {
@@ -112,7 +112,7 @@ const MCPConfigController = {
           // ChatGPT/OpenAI configuration format
           mcpConfig = {
             mcpServers: {
-              [config.env === 'production' ? 'express-api-generator' : 'express-api-generator-dev']: {
+              [config.mcpServerName]: {
                 type: transport,
                 url: mcpEndpoint,
                 env: {
@@ -145,9 +145,9 @@ const MCPConfigController = {
               }
             },
             server: {
-              name: 'Express REST API Generator MCP Server',
+              name: config.mcpServerName,
               version: '1.0.0',
-              description: 'MCP server for Express REST API Generator',
+              description: `MCP server (${config.mcpServerName})`,
               baseUrl: baseUrl,
               endpoint: mcpEndpoint
             },
@@ -211,10 +211,10 @@ const MCPConfigController = {
 
       const info = {
         server: {
-          name: 'Express REST API Generator MCP Server',
+          name: config.mcpServerName,
           version: '1.0.0',
-          description: 'MCP server for Express REST API Generator',
-          enabled: process.env.ENABLE_MCP === 'true' || config.env === 'development'
+          description: `MCP server (${config.mcpServerName})`,
+          enabled: config.enableMcp
         },
         services: {
           count: registeredServices.length,

@@ -56,7 +56,14 @@ export const EnvSchema = z.object({
   LOGGLY_TOKEN: stringOrFalse,
   LOGGLY_SUBDOMAIN: stringOrFalse,
   LOGGLY_TAG: stringOrFalse,
-  CLEANUP_FAILED_JOBS: z.string().default('yes')
+  CLEANUP_FAILED_JOBS: z.string().default('yes'),
+  /** Enable MCP server and Streamable HTTP at /mcp/http. When false, MCP is still enabled in development (NODE_ENV=development). */
+  ENABLE_MCP: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === 'yes'),
+  /** MCP server name (identifier in Cursor, /mcp/config, /mcp/info). */
+  MCP_SERVER_NAME: z.string().default('express-api-generator-mcp')
 });
 
 export type Env = z.infer<typeof EnvSchema>;

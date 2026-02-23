@@ -42,6 +42,10 @@ export interface Config {
   logglySubdomain: string | false;
   logglyTag: string | false;
   cleanUpFailedJobs: string;
+  /** Enable MCP server and /mcp/http transport (also enabled when env is development). */
+  enableMcp: boolean;
+  /** MCP server name (used in Cursor/config and /mcp/info). Set via MCP_SERVER_NAME. */
+  mcpServerName: string;
 }
 
 export type Environment = 'development' | 'production' | 'test';
