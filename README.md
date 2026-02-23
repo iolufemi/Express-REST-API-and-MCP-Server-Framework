@@ -12,15 +12,11 @@ In computer programming, an application programming interface (API) is a set of 
 
 Representational state transfer (REST) or RESTful web services is a way of providing interoperability between computer systems on the Internet. REST-compliant Web services allow requesting systems to access and manipulate textual representations of Web resources using a uniform and predefined set of stateless operations. - [Wikipedia](https://en.wikipedia.org/wiki/Representational_state_transfer)
 
-> NOTE: The use of this project requires that you have a basic knowledge of using express in building a REST API. If you are a newbie, here are some awesome tutorials to get you started.
-
-- [Build Node.js RESTful APIs in 10 Minutes](https://www.codementor.io/olatundegaruba/nodejs-restful-apis-in-10-minutes-q0sgsfhbd)
-- [Easily Develop Node.js and MongoDB Apps with Mongoose](https://scotch.io/tutorials/using-mongoosejs-in-node-js-and-mongodb-applications)
-- [Build a RESTful API Using Node and Express 4](https://scotch.io/tutorials/build-a-restful-api-using-node-and-express-4)
+> NOTE: The use of this project requires that you have a basic knowledge of using Express in building a REST API.
 
 ## What is MCP?
 
-**MCP (Model Context Protocol)** is an open protocol that lets AI assistants (e.g. Claude, ChatGPT, Cursor) interact with your application through a standard interface. Instead of the LLM calling your REST API with raw HTTP, it uses MCP to discover and use **tools** (actions like create, update, delete) and **resources** (read-only data like list and get-by-id).
+**MCP (Model Context Protocol)** is an open protocol that lets AI assistants (e.g. Claude, ChatGPT, Cursor) interact with your application through a standard interface. Instead of the LLM calling your REST API with raw HTTP, it uses MCP to discover and use **tools** (actions like create, update, delete) and **resources** (read-only data like list and get-by-id). - [Wikipedia](https://en.wikipedia.org/wiki/Model_Context_Protocol)
 
 This framework ships with a built-in MCP server. When you generate a service with `npm run generate -- --name users`, the same data is exposed as:
 
