@@ -1,7 +1,7 @@
 {
   "name": "api-template",
-  "version": "1.0.2",
-  "description": "A template for creating APIs Fast",
+  "version": "1.0.3",
+  "description": "A template for creating APIs and MCP servers Fast",
   "type": "module",
   "main": "dist/app.js",
   "scripts": {
