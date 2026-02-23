@@ -38,7 +38,7 @@
     "MongoDB",
     "Sequelize",
     "BullMQ",
-    "MCP Server Generator"
+    "MCP Server Framework"
   ],
   "author": "Olufemi Olanipekun <iolufemi@ymail.com>",
   "license": "GPL-3.0",

@@ -2,7 +2,7 @@
 
 ## System Architecture
 
-The Express REST API Generator is a TypeScript-based development framework that provides both REST API endpoints and MCP (Model Context Protocol) server interfaces for LLMs.
+The Express REST API and MCP Server Framework is a TypeScript-based development framework that provides both REST API endpoints and MCP (Model Context Protocol) server interfaces for LLMs.
 
 ### Core Components
 
@@ -58,8 +58,6 @@ The application follows a strict initialization sequence:
 4. **Routes**: Loaded dynamically using ES modules
 5. **Server**: Starts listening
 6. **MCP**: Initialized after databases ready
-
-See [EXECUTION_ORDER.md](../EXECUTION_ORDER.md) for complete details.
 
 ## MCP Integration
 

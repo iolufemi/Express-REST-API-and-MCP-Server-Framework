@@ -16,7 +16,7 @@
 
 ## Overview
 
-The Express REST API Generator provides built-in MCP (Model Context Protocol) server support, enabling Large Language Models (LLMs) to interact with your API directly through resources and tools. This allows AI assistants to understand your data models, execute operations, and access your API functionality programmatically.
+The Express REST API and MCP Server Framework provides built-in MCP (Model Context Protocol) server support, enabling Large Language Models (LLMs) to interact with your API directly through resources and tools. This allows AI assistants to understand your data models, execute operations, and access your API functionality programmatically.
 
 ## What is MCP?
 
@@ -87,7 +87,7 @@ ENABLE_MCP=true
 START_MCP_SERVER=true
 
 # MCP server name (used in Cursor, /mcp/config, and /mcp/info)
-MCP_SERVER_NAME=express-api-generator-mcp
+MCP_SERVER_NAME=express-api-framework-mcp
 ```
 
 ### Programmatic Configuration
@@ -806,7 +806,7 @@ The endpoint returns a JSON configuration file that includes:
 
 ```json
 {
-  "name": "express-api-generator-dev",
+  "name": "express-api-framework-dev",
   "version": "1.0.0",
   "transport": {
     "type": "http",
@@ -823,7 +823,7 @@ The endpoint returns a JSON configuration file that includes:
     }
   },
   "server": {
-    "name": "Express REST API Generator MCP Server",
+    "name": "Express REST API and MCP Server Framework MCP Server",
     "version": "1.0.0",
     "baseUrl": "https://api.example.com",
     "endpoint": "https://api.example.com/mcp/http"
@@ -868,7 +868,7 @@ GET /mcp/info
 ```json
 {
   "server": {
-    "name": "Express REST API Generator MCP Server",
+    "name": "Express REST API and MCP Server Framework MCP Server",
     "version": "1.0.0",
     "enabled": true
   },
@@ -903,7 +903,7 @@ When adding this MCP server in Cursor (Settings → MCP → Add server), use **H
 
    **Correct example:**
    ```json
-   "express-api-generator-dev": {
+   "express-api-framework-dev": {
      "type": "http",
      "url": "http://localhost:8080/mcp/http",
      "env": {

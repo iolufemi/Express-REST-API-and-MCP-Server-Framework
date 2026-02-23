@@ -128,7 +128,7 @@ const MCPConfigController = {
         default:
           // Generic MCP configuration format
           mcpConfig = {
-            name: config.env === 'production' ? 'express-api-generator' : 'express-api-generator-dev',
+            name: config.mcpServerName,
             version: '1.0.0',
             transport: {
               type: transport,

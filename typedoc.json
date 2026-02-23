@@ -4,7 +4,7 @@
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "node_modules", "dist"],
   "includeVersion": true,
   "readme": "README.md",
-  "name": "Express REST API Generator",
+  "name": "Express REST API and MCP Server Framework",
   "theme": "default",
   "excludePrivate": true,
   "excludeProtected": true,
