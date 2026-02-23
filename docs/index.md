@@ -4,6 +4,8 @@
 
 Express REST API and MCP Server Framework is a framework for building RESTful APIs with Express.js. It uses Node.js, Express, Mongoose (MongoDB), and Sequelize (SQL). Every generated service exposes both REST endpoints and an MCP server so LLMs can interact with your API. The resulting app is a JSON REST API over HTTP plus MCP tools and resources for AI clients.
 
+**GitHub repository:** [iolufemi/Express-REST-API-and-MCP-Server-Framework](https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework)
+
 ## What is API?
 
 In computer programming, an application programming interface (API) is a set of clearly defined methods of communication between various software components. A good API makes it easier to develop a computer program by providing all the building blocks, which are then put together by the programmer. An API may be for a web-based system, operating system, database system, computer hardware or software library. Just as a graphical user interface makes it easier for people to use programs, application programming interfaces make it easier for developers to use certain technologies in building applications. - [Wikipedia](https://en.wikipedia.org/wiki/Application_programming_interface)
@@ -50,7 +52,7 @@ This framework includes a built-in MCP server. When you generate a service with 
 Clone the repository and install dependencies:
 
 ```bash
-$ git clone https://github.com/iolufemi/Express-REST-API-Generator.git ./yourProjectName 
+$ git clone https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework.git ./yourProjectName 
 $ cd yourProjectName
 $ npm install
 ```
@@ -302,7 +304,7 @@ This project is built with TypeScript and all generated code uses TypeScript wit
 
 ## Getting support, Reporting Bugs and Issues
 
-If you need support or want to report a bug, please log an issue [here](https://github.com/iolufemi/Express-REST-API-Generator/issues)
+If you need support or want to report a bug, please log an issue [here](https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework/issues)
 
 ## Running Unit Tests
 
@@ -314,11 +316,11 @@ All generated endpoints come with complete test suites; we encourage you to upda
 
 ## How to contribute
 
-View how to contribute [here](https://github.com/iolufemi/Express-REST-API-Generator/blob/master/CONTRIBUTING.md)
+View how to contribute [here](https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework/blob/master/CONTRIBUTING.md)
 
 ## Code of Conduct
 
-View the code of conduct [here](https://github.com/iolufemi/Express-REST-API-Generator/blob/master/CODE_OF_CONDUCT.md)
+View the code of conduct [here](https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework/blob/master/CODE_OF_CONDUCT.md)
 
 ## Contributors
 

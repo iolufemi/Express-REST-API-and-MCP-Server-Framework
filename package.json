@@ -24,7 +24,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iolufemi/Express-REST-API-Generator.git"
+    "url": "git+https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework.git"
   },
   "keywords": [
     "REST",
@@ -43,9 +43,9 @@
   "author": "Olufemi Olanipekun <iolufemi@ymail.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/iolufemi/Express-REST-API-Generator/issues"
+    "url": "https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework/issues"
   },
-  "homepage": "https://github.com/iolufemi/Express-REST-API-Generator#readme",
+  "homepage": "https://github.com/iolufemi/Express-REST-API-and-MCP-Server-Framework#readme",
   "overrides": {
     "minimist": "^1.2.6",
     "lodash": "^4.17.23",
