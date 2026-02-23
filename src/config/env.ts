@@ -63,7 +63,7 @@ export const EnvSchema = z.object({
     .default('false')
     .transform((v) => v === 'true' || v === 'yes'),
   /** MCP server name (identifier in Cursor, /mcp/config, /mcp/info). */
-  MCP_SERVER_NAME: z.string().default('express-api-generator-mcp')
+  MCP_SERVER_NAME: z.string().default('express-api-framework-mcp')
 });
 
 export type Env = z.infer<typeof EnvSchema>;

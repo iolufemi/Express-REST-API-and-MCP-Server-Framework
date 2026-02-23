@@ -1,4 +1,4 @@
-# Contributing to Express REST API Generator
+# Contributing to Express REST API and MCP Server Framework
 
 1. Clone the repo
 2. Create a new branch for the bugfix, enhancement or feature you want to add. The branch name should follow this format. eg. feature/featureName or bugFix/someBugName or enhancement/someImprovement

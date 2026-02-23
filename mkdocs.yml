@@ -1,4 +1,4 @@
-site_name: Express REST API Generator Documentation
+site_name: Express REST API and MCP Server Framework Documentation
 theme: readthedocs
 
 # Documentation source directory (used by Read the Docs and local mkdocs build)
@@ -11,5 +11,6 @@ nav:
   - MCP Guide: MCP_GUIDE.md
   - Queue Guide: QUEUE_GUIDE.md
   - SQL Populate: SQL_POPULATE.md
+  - API as DB Spec: API_AS_DB_SPEC.md
   - Migration: MIGRATION.md
   - Security Updates: SECURITY_UPDATES.md
