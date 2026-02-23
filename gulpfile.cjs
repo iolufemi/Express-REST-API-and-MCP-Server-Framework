@@ -13,9 +13,10 @@ var conventionalGithubReleaser = require('conventional-github-releaser');
 var bump = require('gulp-bump');
 var git = require('gulp-git');
 var fs = require('fs');
-// Config is only used for gitOAuthToken in release tasks, so we can use a default
+// GitHub token for creating releases (required for 'github-release' task).
+// Set GIT_OAUTH_TOKEN, GITHUB_TOKEN, or CONVENTIONAL_GITHUB_RELEASER_TOKEN.
 var config = {
-    gitOAuthToken: process.env.GIT_OAUTH_TOKEN || '86d6eb7abe03e8ae6a970cb67622e667c9c0f86a'
+    gitOAuthToken: process.env.GIT_OAUTH_TOKEN || process.env.GITHUB_TOKEN || process.env.CONVENTIONAL_GITHUB_RELEASER_TOKEN
 };
 var argv = require('minimist');
 
@@ -310,12 +311,23 @@ gulp.task('changelog', function() {
 });
 
 gulp.task('github-release', function(done) {
+    if (!config.gitOAuthToken) {
+        var err = new Error(
+            'GitHub token required to create a release. Set GIT_OAUTH_TOKEN, GITHUB_TOKEN, or CONVENTIONAL_GITHUB_RELEASER_TOKEN. ' +
+            'Create a token at https://github.com/settings/tokens (classic: repo scope; fine-grained: Releases read/write).'
+        );
+        return done(err);
+    }
+    var pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+    var repoUrl = (pkg.repository && (pkg.repository.url || pkg.repository)) || '';
+    var match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)(?:\.git)?$/);
+    var context = match ? { owner: match[1], repository: match[2] } : {};
     conventionalGithubReleaser({
         type: 'oauth',
-        token: config.gitOAuthToken // change this to your own GitHub token or use an environment variable
+        token: config.gitOAuthToken
     }, {
-        preset: 'angular' // Or to any other commit message convention you use.
-    }, done);
+        preset: 'angular'
+    }, context, {}, {}, {}, done);
 });
 
 // Remember to pass argument '-r patch/minor/major' to the release command
