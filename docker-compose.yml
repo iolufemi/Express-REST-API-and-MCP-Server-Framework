@@ -1,114 +1,113 @@
-version: "3"
-
+version: '3'
 services:
 
     # MySQL
     mysqldb:
-        image: mysql:5.7.26
+        image: mysql:8.0
         restart: always
         environment:
             - MYSQL_ROOT_PASSWORD=command
+            - MYSQL_DATABASE=giro
         volumes:
             - mysql:/var/lib/mysql
         ports:
-            - "3307:3306"
-        restart: always
-
+            - "3306:3306"
+            
     # The Application
-    api:
-        build:
-            context: ./
-            dockerfile: ./Dockerfile
-        ports:
-            - 8280:8080
-        links:
-            - redis
-            - mongo
-            - mysqldb
-        environment:
-            - MONGOLAB_URL=mongodb://mongo/giro
-            - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
-            - REDIS_URL=redis://redis:6379/1
-            - SQL_USERNAME=root
-            - SQL_PASSWORD=command
-            - SQL_DATABASE=giro
-            - SQL_HOST=mysqldb
-        restart: always
-        volumes:
-            - .:/usr/src/app
+    # api:
+    #     build:
+    #         context: ./
+    #         dockerfile: ./Dockerfile
+    #     ports:
+    #         - 8080:8080
+    #     links:
+    #         - redis
+    #         - mongo
+    #         - mysqldb
+    #     environment:
+    #         - MONGOLAB_URL=mongodb://mongo/giro
+    #         - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
+    #         - REDIS_URL=redis://redis:6379/1
+    #         - SQL_USERNAME=root
+    #         - SQL_PASSWORD=command
+    #         - SQL_DATABASE=giro
+    #         - SQL_HOST=mysqldb
+    #     restart: always
 
-    # The Web Server
-    clock:
-        build:
-            context: ./
-            dockerfile: ./clock/Dockerfile
-        links:
-            - redis
-            - mongo
-            - mysqldb
-        environment:
-            - MONGOLAB_URL=mongodb://mongo/giro
-            - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
-            - REDIS_URL=redis://redis:6379/1
-            - SQL_USERNAME=root
-            - SQL_PASSWORD=command
-            - SQL_DATABASE=giro
-            - SQL_HOST=mysqldb
-        restart: always
+    # # The Web Server
+    # clock:
+    #     build:
+    #         context: ./
+    #         dockerfile: ./clock/Dockerfile
+    #     links:
+    #         - redis
+    #         - mongo
+    #         - mysqldb
+    #     environment:
+    #         - MONGOLAB_URL=mongodb://mongo/giro
+    #         - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
+    #         - REDIS_URL=redis://redis:6379/1
+    #         - SQL_USERNAME=root
+    #         - SQL_PASSWORD=command
+    #         - SQL_DATABASE=giro
+    #         - SQL_HOST=mysqldb
+    #     restart: always
 
-    # The Worker
-    worker:
-        build:
-            context: ./
-            dockerfile: ./workers/Dockerfile
-        links:
-            - redis
-            - mongo
-            - mysqldb
-        environment:
-            - MONGOLAB_URL=mongodb://mongo/giro
-            - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
-            - REDIS_URL=redis://redis:6379/1
-            - SQL_USERNAME=root
-            - SQL_PASSWORD=command
-            - SQL_DATABASE=giro
-            - SQL_HOST=mysqldb
-        restart: always
-
+    # # The Worker
+    # worker:
+    #     build:
+    #         context: ./
+    #         dockerfile: ./workers/Dockerfile
+    #     links:
+    #         - redis
+    #         - mongo
+    #         - mysqldb
+    #     environment:
+    #         - MONGOLAB_URL=mongodb://mongo/giro
+    #         - LOG_MONGOLAB_URL=mongodb://mongo/giroLogs
+    #         - REDIS_URL=redis://redis:6379/1
+    #         - SQL_USERNAME=root
+    #         - SQL_PASSWORD=command
+    #         - SQL_DATABASE=giro
+    #         - SQL_HOST=mysqldb
+    #     restart: always
+    
     # Php MyAdmin
-    mysqladmin:
-        image: phpmyadmin/phpmyadmin
-        environment:
-            - PMA_HOST=mysqldb
-        restart: always
-        links:
-            - "mysqldb"
-        ports:
-            - "8000:80"
-
+    # mysqladmin:
+    #     image: phpmyadmin/phpmyadmin
+    #     environment:
+    #         - PMA_HOST=mysqldb
+    #     restart: always
+    #     links:
+    #         - "mysqldb"
+    #     ports:
+    #         - "8000:80"
+            
     # MongoDB Admin
-    mongoadmin:
-        image: mongo-express
-        links:
-            - mongo
-        environment:
-            - ME_CONFIG_MONGODB_SERVER=mongo
-        restart: always
-        links:
-            - "mysqldb"
-        ports:
-            - "80:8081"
+    # mongoadmin:
+    #     image: mongo-express
+    #     links:
+    #         - mongo
+    #     environment:
+    #         - ME_CONFIG_MONGODB_SERVER=mongo
+    #     restart: always
+    #     ports:
+    #         - "80:8081"
 
     # Redis
     redis:
-        image: redis
+        image: redis:latest
         restart: always
+        ports:
+            - "6379:6379"
 
     # Mongo
     mongo:
-        image: mongo:3.6
+        image: mongo:latest
         restart: always
-
+        ports:
+            - "27017:27017"
+        
 volumes:
     mysql:
         driver: local

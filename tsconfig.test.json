@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["mocha", "node", "chai"],
+    "lib": ["ES2022"],
+    "target": "ES2022",
+    "noImplicitAny": false,
+    "strict": false
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node",
+    "compilerOptions": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext"
+    }
+  },
+  "include": ["test/**/*", "src/**/*", "test/globals.d.ts", "test/chai-augment.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

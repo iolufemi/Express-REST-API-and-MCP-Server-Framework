@@ -1,0 +1,36 @@
+{
+  "all": true,
+  "check-coverage": true,
+  "lines": 87,
+  "functions": 90,
+  "branches": 54,
+  "statements": 87,
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/app.ts",
+    "src/types/**/*.ts",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "test/**/*",
+    "dist/**/*",
+    "**/*.d.ts",
+    "src/mcp/**/*.ts",
+    "src/controllers/MCPConfig.ts",
+    "src/services/database/api.ts",
+    "src/services/database/init.ts",
+    "src/services/database/retry.ts",
+    "src/services/queue/clock.ts",
+    "src/routes/health.ts",
+    "src/services/shutdown.ts",
+    "src/services/logger/index.ts"
+  ],
+  "reporter": [
+    "text",
+    "text-summary",
+    "html",
+    "lcov"
+  ],
+  "reports-dir": "coverage"
+}

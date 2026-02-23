@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "description": "Sample API resource",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name"
+    },
+    "count": {
+      "type": "integer",
+      "description": "Quantity"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": ["id", "name"]
+}

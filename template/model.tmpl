@@ -1,95 +1,113 @@
-"use strict";
+/* eslint-disable @typescript-eslint/no-explicit-any -- generated model uses any for schema/types */
+import db from '../services/database/index.js';
+import mongoose, { Schema, Document, Model as MongooseModel } from 'mongoose';
+import { SchemaFieldDefinition } from '../types/models.js';
+import queue from '../services/queue/index.js';
+import debug from 'debug';
 
-var db = require('../services/database').mongo;
+const collection = '<%= service %>s';
+const debugLog = debug(collection);
 
-var queue = require('../services/queue');
-
-var collection = '<%= service %>s';
-
-var debug = require('debug')(collection);
-
-var schemaObject = {
+const schemaObject: Record<string, SchemaFieldDefinition | any> = {
     // ++++++++++++++ Modify to your own schema ++++++++++++++++++
     name: {
-        type: 'String'
+        type: String,
+        description: 'Name field description',
+        mcpDescription: 'Detailed description for LLM context about what this name field represents and how it\'s used'
     },
     someOtherStringData: {
-        type: 'String'
+        type: String,
+        description: 'Some other string data description',
+        mcpDescription: 'Detailed description for LLM context about this field'
     },
     toPop: {
-        type: db._mongoose.Schema.Types.ObjectId,
-        ref: '<%= service %>s'
+        type: Schema.Types.ObjectId,
+        ref: '<%= service %>s',
+        description: 'Reference to another <%= service %>',
+        mcpDescription: 'Reference to another <%= service %> record. Used for populating related data.'
     }
-
     // ++++++++++++++ Modify to your own schema ++++++++++++++++++
 };
 
 schemaObject.createdAt = {
-    type: 'Date',
-    default: Date.now
+    type: Date,
+    default: Date.now,
+    description: 'Creation timestamp',
+    mcpDescription: 'Date and time when the record was created. Automatically set on creation.'
 };
 
 schemaObject.updatedAt = {
-    type: 'Date'
-    // default: new Date().toISOString()
+    type: Date,
+    description: 'Update timestamp',
+    mcpDescription: 'Date and time when the record was last updated. Automatically updated on save.'
 };
 
 schemaObject.owner = {
-    type: db._mongoose.Schema.Types.ObjectId,
-    ref: 'Accounts'
+    type: Schema.Types.ObjectId,
+    ref: 'Accounts',
+    description: 'Owner account ID',
+    mcpDescription: 'Reference to the account that owns this record'
 };
 
 schemaObject.createdBy = {
-    type: db._mongoose.Schema.Types.ObjectId,
-    ref: 'Accounts'
+    type: Schema.Types.ObjectId,
+    ref: 'Accounts',
+    description: 'Creator account ID',
+    mcpDescription: 'Reference to the account that created this record'
 };
 
 schemaObject.client = {
-    type: db._mongoose.Schema.Types.ObjectId,
-    ref: 'Clients'
+    type: Schema.Types.ObjectId,
+    ref: 'Clients',
+    description: 'Client ID',
+    mcpDescription: 'Reference to the client application associated with this record'
 };
 
 schemaObject.developer = {
-    type: db._mongoose.Schema.Types.ObjectId,
-    ref: 'Users'
+    type: Schema.Types.ObjectId,
+    ref: 'Users',
+    description: 'Developer user ID',
+    mcpDescription: 'Reference to the developer user associated with this record'
 };
 
 schemaObject.tags = {
     type: [String],
-    index: 'text'
+    index: 'text',
+    description: 'Search tags',
+    mcpDescription: 'Array of searchable tags extracted from record data for full-text search. Used for searching and filtering records.'
 };
 
 // Let us define our schema
-var Schema = db._mongoose.Schema(schemaObject);
+const SchemaDefinition = new mongoose.Schema(schemaObject);
 
 // Index all text for full text search
 // MyModel.find({$text: {$search: searchString}})
 //    .skip(20)
 //    .limit(10)
 //    .exec(function(err, docs) { ... });
-// Schema.index({'tags': 'text'});
+// SchemaDefinition.index({'tags': 'text'});
 
-Schema.statics.search = function(string) {
+SchemaDefinition.statics.search = function(string: string) {
     return this.find({$text: {$search: string}}, { score : { $meta: "textScore" } })
     .sort({ score : { $meta : 'textScore' } });
 };
 
 // assign a function to the "methods" object of our Schema
-// Schema.methods.someMethod = function (cb) {
+// SchemaDefinition.methods.someMethod = function (cb) {
 //     return this.model(collection).find({}, cb);
 // };
 
 // assign a function to the "statics" object of our Schema
-// Schema.statics.someStaticFunction = function(query, cb) {
+// SchemaDefinition.statics.someStaticFunction = function(query, cb) {
 // eg. pagination
     // this.find(query, null, { skip: 10, limit: 5 }, cb);
 // };
 
 // Adding hooks
 
-Schema.pre('save', function(next) {
+SchemaDefinition.pre('save', function(this: mongoose.Document, next: () => void) {
     // Indexing for search
-    var ourDoc = this._doc;
+    const ourDoc = (this as any)._doc;
 
     ourDoc.model = collection;
 
@@ -100,48 +118,49 @@ Schema.pre('save', function(next) {
     next();
 });
 
-Schema.post('init', function(doc) {
-  debug('%s has been initialized from the db', doc._id);
+SchemaDefinition.post('init', function(doc: Document) {
+  debugLog('%s has been initialized from the db', doc._id);
 });
 
-Schema.post('validate', function(doc) {
-  debug('%s has been validated (but not saved yet)', doc._id);
+SchemaDefinition.post('validate', function(doc: Document) {
+  debugLog('%s has been validated (but not saved yet)', doc._id);
 });
 
-Schema.post('save', function(doc) {
-  debug('%s has been saved', doc._id);
+SchemaDefinition.post('save', function(doc: Document) {
+  debugLog('%s has been saved', doc._id);
 });
 
-Schema.post('remove', function(doc) {
-  debug('%s has been removed', doc._id);
-});
+// Note: 'remove' hook is deprecated in Mongoose, using 'findOneAndDelete' instead
+// SchemaDefinition.post('findOneAndDelete', function(doc: Document) {
+//   debugLog('%s has been removed', doc._id);
+// });
 
-Schema.pre('validate', function(next) {
-  debug('this gets printed first');
+SchemaDefinition.pre('validate', function(next: () => void) {
+  debugLog('this gets printed first');
   next();
 });
 
-Schema.post('validate', function() {
-  debug('this gets printed second');
+SchemaDefinition.post('validate', function() {
+  debugLog('this gets printed second');
 });
 
-Schema.pre('find', function(next) {
-  debug(this instanceof db._mongoose.Query); // true
-  this.start = Date.now();
+SchemaDefinition.pre('find', function(this: mongoose.Query<any, any>, next: () => void) {
+  debugLog(this instanceof mongoose.Query); // true
+  (this as any).start = Date.now();
   next();
 });
 
-Schema.post('find', function(result) {
-  debug(this instanceof db._mongoose.Query); // true
+SchemaDefinition.post('find', function(this: mongoose.Query<any, any> & { start?: number }, result: any) {
+  debugLog(this instanceof mongoose.Query); // true
   // prints returned documents
-  debug('find() returned ' + JSON.stringify(result));
+  debugLog('find() returned ' + JSON.stringify(result));
   // prints number of milliseconds the query took
-  debug('find() took ' + (Date.now() - this.start) + ' millis');
+  debugLog('find() took ' + ((Date.now() - (this.start || 0)) + ' millis'));
 });
 
-Schema.pre('update', function(next) {
+SchemaDefinition.pre(['updateOne', 'updateMany'], function(this: mongoose.Query<any, any>, next: () => void) {
     // Indexing for search
-    var ourDoc = this._update;
+    const ourDoc = (this as any)._update;
     ourDoc.model = collection;
     ourDoc.update = true;
     if(ourDoc.updatedAt || ourDoc.tags){ /* jslint ignore:line */
@@ -157,7 +176,24 @@ Schema.pre('update', function(next) {
     next();
 });
 
-var Model = db.model(collection, Schema);
-Model._mongoose = db._mongoose;
+interface <%= service %>Document extends Document {
+    name?: string;
+    someOtherStringData?: string;
+    toPop?: Schema.Types.ObjectId;
+    createdAt?: Date;
+    updatedAt?: Date;
+    owner?: Schema.Types.ObjectId;
+    createdBy?: Schema.Types.ObjectId;
+    client?: Schema.Types.ObjectId;
+    developer?: Schema.Types.ObjectId;
+    tags?: string[];
+}
 
-module.exports = Model;
+interface <%= service %>Model extends MongooseModel<<%= service %>Document> {
+    search(string: string): any;
+}
+
+const Model = db.mongo.model<<%= service %>Document, <%= service %>Model>(collection, SchemaDefinition) as <%= service %>Model;
+(Model as any)._mongoose = mongoose;
+
+export default Model;
