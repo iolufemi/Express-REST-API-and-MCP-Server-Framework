@@ -244,7 +244,7 @@ Workers are useful for:
 - Async operations
 - Scheduled jobs
 
-See `/services/queue/jobs` for sample tasks and `/services/queue/workers` for worker configuration.
+See `src/services/queue/jobs.ts` for sample tasks and `src/services/queue/workers.ts` for worker configuration.
 
 ## Versioning your API endpoints
 
@@ -256,21 +256,22 @@ You can create multiple versions of your API endpoints by simply adding the vers
 
 ```
 Express-REST-API-Generator/
-├── config/              # Configuration files (development, production)
-├── controllers/         # Request handlers (business logic)
-├── models/              # Data models (Mongoose/Sequelize)
-├── routes/              # Express routes
-├── services/            # Service layer (queue, logger, encryption, etc.)
-│   ├── queue/          # Job queue system (Bull)
-│   ├── logger/         # Logging service
-│   ├── encryption/     # Encryption utilities
-│   └── ...
-├── mcp/                 # MCP server implementations
-│   ├── servers/        # MCP servers for models, controllers, services
-│   └── services/       # Auto-generated MCP service registrations
-├── templates/           # Code generation templates
-├── test/                # Test suites
-└── docs/                # Documentation
+├── src/
+│   ├── config/         # Configuration (env, app config)
+│   ├── controllers/    # Request handlers (business logic)
+│   ├── models/         # Data models (Mongoose/Sequelize)
+│   ├── routes/         # Express routes (loaded automatically)
+│   ├── services/      # Service layer
+│   │   ├── queue/     # Job queue (Bull), clock, workers
+│   │   ├── database/  # MongoDB, Redis, SQL, API client
+│   │   ├── logger/    # Logging
+│   │   └── ...
+│   └── mcp/           # MCP server (tools, resources, HTTP transport)
+│       ├── servers/   # Models, controllers, unified server
+│       └── services/  # Auto-generated MCP service registrations
+├── template/          # Code generation templates (gulp)
+├── test/               # Test suites
+└── docs/               # Documentation
 ```
 
 ## MCP (Model Context Protocol) Integration
