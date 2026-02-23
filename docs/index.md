@@ -67,7 +67,7 @@ $ npm install
 | `npm start` | Run production server |
 | `npm test` | Run unit tests |
 | `npm run type-check` | TypeScript type-check only |
-| `npm run release -- -r patch` | Bump version, changelog, tag, GitHub release (use `minor` or `major` for `-r` as needed) |
+| `npm run release -- --release-type patch` | Bump version, changelog, tag, GitHub release (use `minor` or `major` for `--release-type` as needed) |
 
 Then generate your first API endpoint using the **`generate`** script (no global gulp install needed):
 
@@ -278,7 +278,7 @@ Navigate to other guides from here:
 - **[Migration](./MIGRATION.md)** — Migration notes and changes
 - **[Security Updates](./SECURITY_UPDATES.md)** — Security-related dependency and configuration notes
 
-From the project root, the main [README](../README.md) lists these and release instructions (`npm run release -- -r patch`).
+From the project root, the main [README](../README.md) lists these and release instructions (`npm run release -- --release-type patch`).
 
 ## File Structure
 
