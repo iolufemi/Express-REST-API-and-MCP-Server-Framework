@@ -39,6 +39,22 @@ await queue.create('logRequest', {
 }).save();
 ```
 
+### Await vs fire-and-forget
+
+`queue.create(...).save()` returns a **Promise** (the job is added to Redis asynchronously). You can either await it or not:
+
+- **With `await`** — The caller waits until the job is enqueued. You get the created job (e.g. `job.id`) and can handle enqueue errors with try/catch. Use this when you need to confirm the job was added or use the job object.
+- **Without `await`** — Fire-and-forget: the caller continues immediately while the job is added in the background. If you skip `await`, attach `.catch(...)` to the returned Promise so enqueue failures don’t become unhandled rejections.
+
+```typescript
+// Wait for enqueue, handle errors, use job
+const job = await queue.create('logRequest', data).save();
+console.log('Job id:', job.id);
+
+// Fire-and-forget (add .catch to handle errors)
+queue.create('logRequest', data).save().catch((err) => log.error('Enqueue failed', err));
+```
+
 ## Job Processors
 
 Job processors are defined in `src/services/queue/workers.ts`. Each queue has a processor that handles jobs. Sample job definitions live in `src/services/queue/jobs.ts`. The **clock** and **workers** are started with `npm run clock` and `npm run workers` (they run the compiled code in `dist/` after `npm run build`).
