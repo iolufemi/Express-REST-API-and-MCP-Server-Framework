@@ -7,7 +7,6 @@ var todo = require('gulp-todo');
 var mocha = require('gulp-mocha');
 var _ = require('lodash');
 
-var runSequence = require('run-sequence');
 var conventionalChangelog = require('gulp-conventional-changelog');
 var conventionalGithubReleaser = require('conventional-github-releaser');
 var bump = require('gulp-bump');

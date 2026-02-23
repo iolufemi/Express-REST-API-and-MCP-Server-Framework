@@ -1,9 +1,30 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default [
   {
     ignores: ['node_modules/', 'coverage/', 'template/', 'views/', 'docs/', 'dist/', '**/*.js']
+  },
+  {
+    files: ['src/**/*.d.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module'
+      },
+      globals: {}
+    },
+    plugins: { '@typescript-eslint': tsPlugin },
+    rules: {
+      ...tsPlugin.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-console': 'off'
+    }
   },
   {
     files: ['src/**/*.ts'],
@@ -12,7 +33,10 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
-        project: './tsconfig.json'
+        projectService: {
+          allowDefaultProject: ['src/types/express.d.ts']
+        },
+        tsconfigRootDir: __dirname
       },
       globals: {}
     },
@@ -30,7 +54,8 @@ export default [
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
-        project: './tsconfig.test.json'
+        project: './tsconfig.test.json',
+        tsconfigRootDir: __dirname
       },
       globals: {}
     },

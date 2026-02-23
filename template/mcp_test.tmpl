@@ -122,8 +122,13 @@ describe('<%= service %> MCP Integration', function () {
         if (uris.length > 0) {
           const forModel = uris.filter((u: string) => u && u.includes('<%= namePlural %>'));
           expect(forModel).to.include('<%= namePlural %>://list');
-          expect(forModel).to.include('<%= namePlural %>://{id}');
           expect(forModel).to.include('<%= namePlural %>://search');
+        }
+        const templatesResult = await client.listResourceTemplates();
+        const templates = (templatesResult.resourceTemplates || []).map((t: { uriTemplate?: string }) => t.uriTemplate).filter(Boolean);
+        const forModelTemplates = templates.filter((u: string) => u && u.includes('<%= namePlural %>'));
+        if (forModelTemplates.length > 0) {
+          expect(forModelTemplates.some((t: string) => t.includes('{id}'))).to.equal(true, 'Expected a template for get-by-id (<%= namePlural %>://{id})');
         }
       } catch (err: unknown) {
         expect(String((err as Error).message)).to.include('Method not found', 'Server may not register resources yet; protocol exchange still verified');
