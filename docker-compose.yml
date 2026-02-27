@@ -12,7 +12,13 @@ services:
             - mysql:/var/lib/mysql
         ports:
             - "3306:3306"
-            
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcommand"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 10s
+
     # The Application
     api:
         build:
@@ -20,10 +26,10 @@ services:
             dockerfile: ./Dockerfile
         ports:
             - 8080:8080
-        links:
-            - redis
-            - mongo
-            - mysqldb
+        depends_on:
+            redis: { condition: service_healthy }
+            mongo: { condition: service_healthy }
+            mysqldb: { condition: service_healthy }
         environment:
             - MONGOLAB_URL=mongodb://mongo:27017/giro
             - LOG_MONGOLAB_URL=mongodb://mongo:27017/giroLogs
@@ -40,10 +46,10 @@ services:
         build:
             context: ./
             dockerfile: ./clock/Dockerfile
-        links:
-            - redis
-            - mongo
-            - mysqldb
+        depends_on:
+            redis: { condition: service_healthy }
+            mongo: { condition: service_healthy }
+            mysqldb: { condition: service_healthy }
         environment:
             - MONGOLAB_URL=mongodb://mongo:27017/giro
             - LOG_MONGOLAB_URL=mongodb://mongo:27017/giroLogs
@@ -60,10 +66,10 @@ services:
         build:
             context: ./
             dockerfile: ./workers/Dockerfile
-        links:
-            - redis
-            - mongo
-            - mysqldb
+        depends_on:
+            redis: { condition: service_healthy }
+            mongo: { condition: service_healthy }
+            mysqldb: { condition: service_healthy }
         environment:
             - MONGOLAB_URL=mongodb://mongo:27017/giro
             - LOG_MONGOLAB_URL=mongodb://mongo:27017/giroLogs
@@ -75,25 +81,26 @@ services:
             - SQL_HOST=mysqldb
         restart: always
     
-    # Php MyAdmin
+    # Php MyAdmin (platform required: official image is amd64 only; runs via emulation on arm64)
     mysqladmin:
         image: phpmyadmin/phpmyadmin
+        platform: linux/amd64
         environment:
             - PMA_HOST=mysqldb
         restart: always
-        links:
-            - "mysqldb"
+        depends_on:
+            mysqldb: { condition: service_healthy }
         ports:
             - "8000:80"
-            
+
     # MongoDB Admin
     mongoadmin:
         image: mongo-express
-        links:
-            - mongo
         environment:
             - ME_CONFIG_MONGODB_SERVER=mongo
         restart: always
+        depends_on:
+            mongo: { condition: service_healthy }
         ports:
             - "80:8081"
 
@@ -103,6 +110,12 @@ services:
         restart: always
         ports:
             - "6379:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+            start_period: 5s
 
     # Mongo
     mongo:
@@ -110,6 +123,12 @@ services:
         restart: always
         ports:
             - "27017:27017"
+        healthcheck:
+            test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+            start_period: 10s
         
 volumes:
     mysql:
